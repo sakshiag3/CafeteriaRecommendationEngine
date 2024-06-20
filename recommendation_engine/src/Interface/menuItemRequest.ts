@@ -1,0 +1,1 @@
+export interface menuItem  { name: string; description: string; price: string; category: string; availabilityStatus?: boolean }

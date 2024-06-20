@@ -1,0 +1,1 @@
+export interface userDataRequest { username: string; password: string; role: string }

@@ -1,0 +1,1 @@
+export interface updateMenuItem { description?: string; price?: string; category?: string; availabilityStatus?: boolean }
