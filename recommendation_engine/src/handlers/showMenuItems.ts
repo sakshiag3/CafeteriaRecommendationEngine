@@ -18,10 +18,3 @@ export async function showMenuItems(ws: WebSocket, menuItemService: MenuItemServ
   menuItemTable += '+----+-----------------+--------------------+-------+----------------+------------+\n';
   ws.send(menuItemTable);
 }
-
-export function getMenuItemIdByDisplayId(displayId: number): number | undefined {
-  if (displayId > 0 && displayId <= menuItemsCache.length) {
-    return menuItemsCache[displayId - 1].id;
-  }
-  return undefined;
-}

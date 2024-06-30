@@ -7,6 +7,7 @@ import { FoodCategory } from '../entity/FoodCategory';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { FinalSelection } from '../entity/FinalSelection';
 import { ChefService } from '../services/chefService';
+import { Util } from '../utils/Util';
 
 export class ChefController {
   constructor(
@@ -17,17 +18,10 @@ export class ChefController {
     private foodCategoryRepository: Repository<FoodCategory>
   ) {}
 
-  public getCurrentDateRange() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
+  
   public async fetchRecommendations(ws: WebSocket) {
     try {
-      const { start, end } = this.getCurrentDateRange();
+      const { start, end } = await Util.getCurrentDateRange();
       const existingRecommendations = await this.recommendationService.getRecommendationsByDateRange(start, end);
 
       if (existingRecommendations.length > 0) {
@@ -107,7 +101,7 @@ export class ChefController {
 
   public async viewVotes(ws: WebSocket) {
     try {
-      const { start, end } = this.getCurrentDateRange();
+      const { start, end } = await Util.getCurrentDateRange();
       const votes = await this.chefService.getVotesForDateRange(start, end);
 
       const voteCounts = votes.reduce((acc, vote) => {
@@ -207,7 +201,7 @@ export class ChefController {
 
   public async selectItemToPrepare(ws: WebSocket, selectedIds: { meal: string, id: number }[]) {
     try {
-      const { start, end } = this.getCurrentDateRange();
+      const { start, end } = await Util.getCurrentDateRange();
       const existingFinalSelections = await this.getFinalSelectionsForDate(start, end);
 
       for (const { meal, id } of selectedIds) {

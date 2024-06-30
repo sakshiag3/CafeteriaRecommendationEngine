@@ -2,6 +2,7 @@ import { WebSocket } from 'ws';
 import { ChefController } from '../controllers/chefController';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
+import { Util } from '../utils/Util';
 
 export async function handleChefInputs(
   ws: WebSocket,
@@ -16,7 +17,7 @@ export async function handleChefInputs(
   if (currentState === 'selectRecommendations') {
     if (selectedIdsByMeal.length === 0) {
         // Check if recommendations have already been selected for the day
-        const { start, end } = chefController.getCurrentDateRange();
+        const { start, end } = await Util.getCurrentDateRange();
         const existingSelectedRecommendations = await chefController.getSelectedRecommendationsByDateRange(start, end);
 
         if (existingSelectedRecommendations.length > 0) {
@@ -60,7 +61,7 @@ export async function handleChefInputs(
       { meal: 'Dinner', id: dinnerId }
     ];
 
-    const { start, end } = chefController.getCurrentDateRange();
+    const { start, end } = await Util.getCurrentDateRange();
     const existingSelections = await chefController.getFinalSelectionsForDate(start, end);
 
     if (existingSelections.length > 0) {

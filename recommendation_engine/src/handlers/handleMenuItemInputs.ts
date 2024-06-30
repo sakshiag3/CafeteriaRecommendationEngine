@@ -1,6 +1,5 @@
 import WebSocket from 'ws';
 import { MenuItemController } from '../controllers/menuItemController';
-import { getMenuItemIdByDisplayId } from './showMenuItems';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
 

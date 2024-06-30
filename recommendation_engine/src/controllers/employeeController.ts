@@ -8,6 +8,7 @@ import { User } from '../entity/User';
 import { WebSocket } from 'ws';
 import SentimentAnalyzer from '../services/sentimentAnalyzer';
 import { SentimentScore } from '../entity/SentimentScore';
+import { Util } from '../utils/Util';
 
 export class EmployeeController {
   private sentimentAnalyzer: SentimentAnalyzer;
@@ -23,7 +24,7 @@ export class EmployeeController {
   }
 
   public async viewSelectedMenuItems(ws: WebSocket) {
-    const { start, end } = this.getCurrentDateRange();
+    const { start, end } = await Util.getCurrentDateRange();
     const selectedRecommendations = await this.selectedRecommendationRepository.find({
       where: { date: Between(start, end) },
       relations: ['menuItem'],
@@ -34,7 +35,7 @@ export class EmployeeController {
   }
 
   public async viewPreparedMenuItems(ws: WebSocket) {
-    const { start, end } = this.getCurrentDateRange();
+    const { start, end } = await Util.getCurrentDateRange();
     const finalSelections = await this.finalSelectionRepository.find({
       where: { date: Between(start, end) },
       relations: ['selectedRecommendation', 'selectedRecommendation.menuItem'],
@@ -45,7 +46,7 @@ export class EmployeeController {
   }
 
   public async castVote(ws: WebSocket, userId: number, selectedRecommendationId: number, meal: string) {
-    const { start, end } = this.getCurrentDateRange();
+    const { start, end } = await Util.getCurrentDateRange();
 
     const existingVote = await this.voteRepository.findOne({
       where: { user: { id: userId }, selectedRecommendation: { meal: meal }, date: Between(start, end) },
@@ -103,13 +104,6 @@ export class EmployeeController {
     return !!menuItem;
   }
 
-  private getCurrentDateRange() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
 
   private formatSelectedRecommendationsToTables(recommendations: SelectedRecommendation[]) {
     const breakfastItems = recommendations.filter(r => r.meal === 'Breakfast');
