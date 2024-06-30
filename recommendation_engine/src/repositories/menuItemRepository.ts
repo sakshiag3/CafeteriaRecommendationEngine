@@ -32,6 +32,10 @@ export class MenuItemRepository {
     return this.menuItemRepo.find();
   }
 
+  async findMenuItemsByCategory(category: FoodCategory): Promise<MenuItem[]> {
+    return this.menuItemRepo.find({ where: { category } });
+  }
+
   async update(id: number, updates: Partial<MenuItem>): Promise<void> {
     await this.menuItemRepo.update(id, updates);
   }

@@ -1,9 +1,7 @@
 import { WebSocket } from 'ws';
 import { RecommendationService } from '../services/recommendationService';
 import { MenuItemService } from '../services/menuItemService';
-import { Repository } from 'typeorm';
-import { MenuItem } from '../entity/MenuItem';
-import { FoodCategory } from '../entity/FoodCategory';
+import { MenuItemRepository } from '../repositories/menuItemRepository';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { FinalSelection } from '../entity/FinalSelection';
 import { ChefService } from '../services/chefService';
@@ -14,8 +12,7 @@ export class ChefController {
     private recommendationService: RecommendationService,
     private chefService: ChefService,
     private menuItemService: MenuItemService,
-    private menuItemRepository: Repository<MenuItem>,
-    private foodCategoryRepository: Repository<FoodCategory>
+    private menuItemRepository: MenuItemRepository
   ) {}
 
   public async fetchRecommendations(ws: WebSocket) {
@@ -30,8 +27,7 @@ export class ChefController {
       }
 
       const recommendations = await this.recommendationService.fetchRecommendations(
-        this.menuItemRepository,
-        this.foodCategoryRepository
+        this.menuItemRepository
       );
 
       const formattedTable = Util.formatRecommendationsToTable(recommendations);

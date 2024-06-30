@@ -2,8 +2,9 @@ import { WebSocket } from 'ws';
 import { User } from '../entity/User';
 import { UserService } from '../services/userService';
 import { MenuItemService } from '../services/menuItemService';
+import { AdminController } from '../controllers/adminController';
+import { handleLogout } from './logoutHandler';
 import { MenuItemController } from '../controllers/menuItemController';
-import { handleLogout } from '../handlers/logoutHandler';
 
 export async function handleAdminCommands(
   ws: WebSocket,
@@ -12,7 +13,8 @@ export async function handleAdminCommands(
   userService: UserService,
   user: User,
   menuItemController: MenuItemController,
-  menuItemService: MenuItemService
+  menuItemService: MenuItemService,
+  adminController: AdminController
 ) {
   switch (command) {
     case '1':
@@ -37,6 +39,15 @@ export async function handleAdminCommands(
       ws.send('Admin: Delete Menu Item');
       ws.send('Please enter the ID of the menu item to delete:');
       currentStateSetter('deleteMenuItemId');
+      break;
+    case '6':
+      await adminController.viewDiscardList(ws);
+      currentStateSetter('authenticated');
+      break;
+    case '7':
+      ws.send('Admin: Change Menu Item Availability');
+      ws.send('Please enter the menu item ID and new availability (true/false) in the format "itemId,availability":');
+      currentStateSetter('changeAvailability');
       break;
     case 'logout':
       await handleLogout(ws, userService, user);

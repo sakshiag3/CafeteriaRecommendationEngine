@@ -5,6 +5,7 @@ import { handleRoleBasedCommand } from './handleRoleBasedCommand';
 import { handleChefInputs } from './handleChefInputs';
 import { showRoleBasedOptions } from './showRoleBasedOptions';
 import bcrypt from 'bcrypt';
+import { handleAdminCommands } from './handleAdminCommands';
 
 export async function handleUserConnection(
   ws: WebSocket,
@@ -71,6 +72,7 @@ export async function handleUserConnection(
           msg,
           services.userService,
           services.menuItemService,
+          controllers.adminController,
           controllers.chefController,
           controllers.employeeController,
           controllers.menuItemController,
@@ -96,6 +98,9 @@ export async function handleUserConnection(
       const [menuItemId, rating, ...commentParts] = msg.split(';');
       const comment = commentParts.join(';').trim();
       await controllers.employeeController.giveFeedback(ws, currentUser.id, parseInt(menuItemId, 10), parseInt(rating, 10), comment);
+      currentStateSetter('authenticated');
+    } else if (currentState === 'changeAvailability') {
+      await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser') || currentState.startsWith('updateUser') || currentState.startsWith('deleteUser')) {
       await handleUserInputs(ws, msg, currentState, controllers.userController, controllers.roleController, currentStateSetter);

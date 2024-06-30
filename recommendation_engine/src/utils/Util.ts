@@ -56,5 +56,16 @@ export class Util {
       table += '+----+---------------------+------------+\n';
       return table;
     }
+    
+    public static formatDiscardListToTable(discardList: any[]) {
+      let table = '+----+-------------+--------------------+--------+--------------+---------------+\n';
+      table += '| ID | Name        | Description        | Rating | Sentiment Score |\n';
+      table += '+----+-------------+--------------------+--------+--------------+---------------+\n';
+      discardList.forEach(rec => {
+        table += `| ${rec.item.id.toString().padEnd(2)} | ${rec.item.name.padEnd(11)} | ${rec.item.description.padEnd(18)} | ${rec.avgRating.toFixed(2).padEnd(6)} | ${rec.sentimentScore.toFixed(2).padEnd(15)} |\n`;
+      });
+      table += '+----+-------------+--------------------+--------+--------------+---------------+\n';
+      return table;
+    }
   }
   

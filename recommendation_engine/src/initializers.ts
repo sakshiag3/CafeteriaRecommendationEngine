@@ -24,6 +24,7 @@ import { RoleController } from './controllers/roleController';
 import { MenuItemController } from './controllers/menuItemController';
 import { ChefController } from './controllers/chefController';
 import { EmployeeController } from './controllers/employeeController';
+import { AdminController } from './controllers/adminController';
 
 export function initializeRepositories(dataSource: DataSource) {
   return {
@@ -64,8 +65,7 @@ export function initializeControllers(services: any, repositories: any) {
       services.recommendationService,
       services.chefService,
       services.menuItemService,
-      repositories.menuItemRepository,
-      repositories.foodCategoryRepository
+      repositories.menuItemRepository
     ),
     employeeController: new EmployeeController(
       repositories.selectedRecommendationRepository,
@@ -74,6 +74,11 @@ export function initializeControllers(services: any, repositories: any) {
       repositories.feedbackRepository,
       repositories.sentimentScoreRepository,
       repositories.menuItemRepository
+    ),
+    adminController: new AdminController(
+      repositories.menuItemRepository,
+      repositories.feedbackRepository,
+      repositories.sentimentScoreRepository
     )
   };
 }

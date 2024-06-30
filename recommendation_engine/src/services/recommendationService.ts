@@ -5,6 +5,7 @@ import { Recommendation } from '../entity/Recommendation';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { Feedback } from '../entity/Feedback';
 import { SentimentScore } from '../entity/SentimentScore';
+import { MenuItemRepository } from '../repositories/menuItemRepository'; // Ensure correct import
 
 export class RecommendationService {
   constructor(
@@ -15,12 +16,11 @@ export class RecommendationService {
   ) {}
 
   async fetchRecommendations(
-    menuItemRepository: Repository<MenuItem>,
-    foodCategoryRepository: Repository<FoodCategory>
+    menuItemRepository: MenuItemRepository
   ): Promise<any[]> {
-    const breakfastCategory = await foodCategoryRepository.findOne({ where: { name: 'Breakfast' } });
-    const lunchCategory = await foodCategoryRepository.findOne({ where: { name: 'Lunch' } });
-    const dinnerCategory = await foodCategoryRepository.findOne({ where: { name: 'Dinner' } });
+    const breakfastCategory = await menuItemRepository.findCategoryByName('Breakfast');
+    const lunchCategory = await menuItemRepository.findCategoryByName('Lunch');
+    const dinnerCategory = await menuItemRepository.findCategoryByName('Dinner');
 
     if (!breakfastCategory || !lunchCategory || !dinnerCategory) {
       throw new Error('One or more food categories not found');
@@ -31,9 +31,9 @@ export class RecommendationService {
     const dinnerItems = await this.getMenuItemsWithScores(menuItemRepository, dinnerCategory);
 
     const recommendations = [
-      ...this.getTopItems(breakfastItems, 2, 'Breakfast'),
-      ...this.getTopItems(lunchItems, 2, 'Lunch'),
-      ...this.getTopItems(dinnerItems, 2, 'Dinner')
+      ...this.getTopItems(breakfastItems, 3, 'Breakfast'),
+      ...this.getTopItems(lunchItems, 3, 'Lunch'),
+      ...this.getTopItems(dinnerItems, 3, 'Dinner')
     ];
 
     // Save the recommendations
@@ -53,8 +53,8 @@ export class RecommendationService {
     }));
   }
 
-  private async getMenuItemsWithScores(menuItemRepository: Repository<MenuItem>, category: FoodCategory) {
-    const menuItems = await menuItemRepository.find({ where: { category } });
+  private async getMenuItemsWithScores(menuItemRepository: MenuItemRepository, category: FoodCategory) {
+    const menuItems = await menuItemRepository.findMenuItemsByCategory(category);
     const itemsWithScores = [];
 
     for (const item of menuItems) {

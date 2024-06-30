@@ -17,4 +17,15 @@ export class UserController {
     return this.userService.save(user);
   }
 
+  async getNotifications(user: User) {
+    return this.userService.getNotifications(user);
+  }
+
+  async checkUsername(username: string) {
+    return this.userService.checkUsername(username);
+  }
+
+  async getUsers() {
+    return this.userService.getUsers();
+  }
 }
