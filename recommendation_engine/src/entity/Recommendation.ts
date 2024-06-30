@@ -14,4 +14,5 @@ export class Recommendation {
 
   @ManyToOne(() => MenuItem)
   menuItem!: MenuItem;
+  
 }

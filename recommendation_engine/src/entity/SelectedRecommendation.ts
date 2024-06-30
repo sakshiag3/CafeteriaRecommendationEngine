@@ -1,17 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, Column } from 'typeorm';
-import { Recommendation } from './Recommendation';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, Column, CreateDateColumn } from 'typeorm';
+import { MenuItem } from './MenuItem';
 
 @Entity()
 export class SelectedRecommendation {
-  @PrimaryGeneratedColumn()
-  id!: number;
+    @PrimaryGeneratedColumn()
+    id!: number;
 
-  @ManyToOne(() => Recommendation)
-  recommendation!: Recommendation;
-
-  @Column()
-  meal!: string;
-
-  @CreateDateColumn()
-  date!: Date;
+    @Column()
+    meal!: string;
+  
+    @CreateDateColumn()
+    date!: Date;
+  
+    @ManyToOne(() => MenuItem)
+    menuItem!: MenuItem;
 }

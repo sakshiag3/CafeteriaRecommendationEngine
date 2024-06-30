@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { User } from './User';
-import { MenuItem } from './MenuItem';
+import { Role } from './Role';
 
 @Entity()
 export class Notification {
@@ -16,9 +15,6 @@ export class Notification {
   @CreateDateColumn()
   createdAt!: Date;
 
-  @ManyToOne(() => User)
-  user!: User;
-
-  @ManyToOne(() => MenuItem)
-  menuItem!: MenuItem;
+  @ManyToOne(() => Role)
+  role!: Role;
 }

@@ -43,7 +43,7 @@ export class UserService {
   }
 
   async getNotifications(user: User) {
-    return this.notificationRepository.findNotificationsByUser(user.id);
+    return this.notificationRepository.findNotificationsByRoleAndTime(user.role.id, user.logoutTime);
   }
 
   async getUsers() {
@@ -52,5 +52,8 @@ export class UserService {
 
   async findByUsername(username: string) {
     return this.userRepository.findByUsername(username);
+  }
+  async createNotification(content: string, roleId: number) {
+    return this.notificationRepository.createNotification(content, roleId);
   }
 }

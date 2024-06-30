@@ -1,6 +1,8 @@
 import WebSocket from 'ws';
 import { MenuItemController } from '../controllers/menuItemController';
 import { getMenuItemIdByDisplayId } from './showMenuItems';
+import { UserService } from '../services/userService';
+import { RoleService } from '../services/roleService';
 
 let newMenuItemDetails: { id?: number, name?: string, description?: string, price?: string, category?: string } = {};
 let updateMenuItemDetails: { id?: number, description?: string, price?: string, category?: string } = {};
@@ -11,49 +13,49 @@ export async function handleMenuItemInputs(
   msg: string,
   state: string,
   menuItemController: MenuItemController,
+  userService: UserService,
+  roleService: RoleService,
   currentStateSetter: (state: string) => void
 ) {
   console.log(`handleMenuItemInputs: state = ${state}, msg = ${msg}`);
 
   if (state.startsWith('addMenuItem')) {
-    if (state === 'addMenuItemStart') {
-      ws.send('Please enter the name of the new menu item:');
-      currentStateSetter('addMenuItemName');
-    } else if (state === 'addMenuItemName') {
-      const existingMenuItem = await menuItemController.findByName(msg);
-      console.log(`Existing menu item: ${existingMenuItem}`);
-      if (existingMenuItem) {
-        ws.send(`Error: Menu item with name ${msg} already exists. Please enter a different name:`);
-      } else {
-        newMenuItemDetails.name = msg;
-        ws.send(`Enter description for the menu item ${newMenuItemDetails.name}:`);
-        currentStateSetter('addMenuItemDescription');
+    if (state === 'addMenuItemDetails') {
+      const [name, description, price, category] = msg.split(',');
+
+      if (!name || !description || !price || !category) {
+        ws.send('Error: Please provide all details in the format "name, description, price, category".');
+        return;
       }
-    } else if (state === 'addMenuItemDescription') {
-      newMenuItemDetails.description = msg;
-      ws.send(`Enter price for the menu item ${newMenuItemDetails.name}:`);
-      currentStateSetter('addMenuItemPrice');
-    } else if (state === 'addMenuItemPrice') {
-      newMenuItemDetails.price = msg;
-      const categories = await menuItemController.getCategories();
-      ws.send(`Enter category for the menu item ${newMenuItemDetails.name}. Available categories: ${categories.map(category => category.name).join(', ')}:`);
-      currentStateSetter('addMenuItemCategory');
-    } else if (state === 'addMenuItemCategory') {
-      const category = await menuItemController.findCategoryByName(msg);
-      if (!category) {
-        const categories = await menuItemController.getCategories();
-        ws.send(`Error: Category ${msg} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
+
+      const existingMenuItem = await menuItemController.findByName(name);
+      if (existingMenuItem) {
+        ws.send(`Error: Menu item with name ${name} already exists. Please enter a different name:`);
       } else {
-        newMenuItemDetails.category = msg;
-        await menuItemController.handleAddMenuItem({
-          name: newMenuItemDetails.name!,
-          description: newMenuItemDetails.description!,
-          price: newMenuItemDetails.price!,
-          category: newMenuItemDetails.category!
-        });
-        ws.send(`Menu item ${newMenuItemDetails.name} added successfully.`);
-        newMenuItemDetails = {};
-        currentStateSetter('authenticated');
+        const categoryEntity = await menuItemController.findCategoryByName(category);
+        if (!categoryEntity) {
+          const categories = await menuItemController.getCategories();
+          ws.send(`Error: Category ${category} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
+        } else {
+          await menuItemController.handleAddMenuItem({
+            name,
+            description,
+            price,
+            category
+          });
+          ws.send(`Menu item ${name} added successfully.`);
+
+          const chefRole = await roleService.getRoleByName('Chef');
+          if (chefRole) {
+            await userService.createNotification(
+              `New menu item added: ${name}`,
+              chefRole.id
+            );
+            ws.send('Notification sent to Chef role.');
+          }
+
+          currentStateSetter('authenticated');
+        }
       }
     }
   } else if (state.startsWith('deleteMenuItem')) {
@@ -61,25 +63,18 @@ export async function handleMenuItemInputs(
       ws.send('Please enter the ID of the menu item to delete:');
       currentStateSetter('deleteMenuItemId');
     } else if (state === 'deleteMenuItemId') {
-      const displayId = parseInt(msg, 10); // Convert msg to a number
-      if (isNaN(displayId)) {
+      const id = parseInt(msg, 10); // Convert msg to a number
+      if (isNaN(id)) {
         ws.send('Invalid ID. Please enter a valid numeric ID.');
         return;
       }
-      const id = getMenuItemIdByDisplayId(displayId);
-      if (id === undefined) {
-        ws.send(`Error: Menu item with ID ${displayId} does not exist. Please enter a valid ID.`);
+      const existingMenuItem = await menuItemController.findById(id);
+      if (!existingMenuItem) {
+        ws.send(`Error: Menu item with ID ${id} does not exist. Please enter a valid ID.`);
       } else {
-        const existingMenuItem = await menuItemController.findById(id);
-        console.log(`Existing menu item: ${existingMenuItem}`);
-        if (!existingMenuItem) {
-          ws.send(`Error: Menu item with ID ${displayId} does not exist. Please enter a valid ID.`);
-        } else {
-          await menuItemController.handleDeleteMenuItem(id);
-          ws.send(`Menu item with ID ${displayId} deleted successfully.`);
-          deleteMenuItemDetails = {};
-          currentStateSetter('authenticated');
-        }
+        await menuItemController.handleDeleteMenuItem(id);
+        ws.send(`Menu item with ID ${id} deleted successfully.`);
+        currentStateSetter('authenticated');
       }
     }
   } else if (state.startsWith('updateMenuItem')) {
@@ -87,14 +82,14 @@ export async function handleMenuItemInputs(
       ws.send('Please enter the ID of the menu item to update:');
       currentStateSetter('updateMenuItemId');
     } else if (state === 'updateMenuItemId') {
-      const displayId = parseInt(msg, 10); // Convert msg to a number
-      if (isNaN(displayId)) {
+      const id = parseInt(msg, 10); // Convert msg to a number
+      if (isNaN(id)) {
         ws.send('Invalid ID. Please enter a valid numeric ID.');
         return;
       }
-      const id = getMenuItemIdByDisplayId(displayId);
-      if (id === undefined) {
-        ws.send(`Error: Menu item with ID ${displayId} does not exist. Please enter a valid ID.`);
+      const existingMenuItem = await menuItemController.findById(id);
+      if (!existingMenuItem) {
+        ws.send(`Error: Menu item with ID ${id} does not exist. Please enter a valid ID.`);
       } else {
         updateMenuItemDetails.id = id;
         ws.send(`Enter new description for the menu item (or press enter to skip):`);

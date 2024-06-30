@@ -11,9 +11,9 @@ export async function showMenuItems(ws: WebSocket, menuItemService: MenuItemServ
   menuItemTable += '+----+-----------------+--------------------+-------+----------------+------------+\n';
   menuItemTable += '| ID | Name            | Description        | Price | Category       | Available  |\n';
   menuItemTable += '+----+-----------------+--------------------+-------+----------------+------------+\n';
-  menuItems.forEach((menuItem: MenuItem, index: number) => {
+  menuItems.forEach((menuItem: MenuItem) => {
     const availabilityStatus = menuItem.availabilityStatus ? 'Yes' : 'No';
-    menuItemTable += `| ${String(index + 1).padEnd(2)} | ${menuItem.name.padEnd(15)} | ${menuItem.description.padEnd(18)} | ${String(menuItem.price).padEnd(5)} | ${menuItem.category.name.padEnd(14)} | ${availabilityStatus.padEnd(10)} |\n`;
+    menuItemTable += `| ${String(menuItem.id).padEnd(2)} | ${menuItem.name.padEnd(15)} | ${menuItem.description.padEnd(18)} | ${String(menuItem.price).padEnd(5)} | ${menuItem.category.name.padEnd(14)} | ${availabilityStatus.padEnd(10)} |\n`;
   });
   menuItemTable += '+----+-----------------+--------------------+-------+----------------+------------+\n';
   ws.send(menuItemTable);
