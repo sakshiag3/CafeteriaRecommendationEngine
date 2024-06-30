@@ -19,31 +19,9 @@ export class ChefService {
     this.finalSelectionRepository = AppDataSource.getRepository(FinalSelection);
   }
 
-  async selectRecommendations(meal: string, selectedItems: number[]): Promise<void> {
-    const menuItems = await this.menuItemRepository.find({
-      where: selectedItems.map(id => ({ id })),
-    });
+ 
 
-    const selectedRecommendations = menuItems.map(menuItem => {
-      const selected = new SelectedRecommendation();
-      selected.menuItem = menuItem;
-      selected.meal = meal;
-      selected.date = new Date();
-      return selected;
-    });
 
-    await this.selectedRecommendationRepository.save(selectedRecommendations);
-  }
-
-  async getChefSelectionsForDay(date: Date): Promise<SelectedRecommendation[]> {
-    return this.selectedRecommendationRepository.find({ where: { date } });
-  }
-
-  async getVotes(): Promise<Vote[]> {
-    return this.voteRepository.find({
-      relations: ['selectedRecommendation', 'selectedRecommendation.menuItem', 'user'],
-    });
-  }
 
   async prepareItem(id: number, meal: string): Promise<FinalSelection> {
     const selectedRecommendation = await this.selectedRecommendationRepository.findOne({

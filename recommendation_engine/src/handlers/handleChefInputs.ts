@@ -16,31 +16,30 @@ export async function handleChefInputs(
 ) {
   if (currentState === 'selectRecommendations') {
     if (selectedIdsByMeal.length === 0) {
-        // Check if recommendations have already been selected for the day
-        const { start, end } = await Util.getCurrentDateRange();
-        const existingSelectedRecommendations = await chefController.getSelectedRecommendationsByDateRange(start, end);
+      const { start, end } = await Util.getCurrentDateRange();
+      const existingSelectedRecommendations = await chefController.getSelectedRecommendationsByDateRange(start, end);
 
-        if (existingSelectedRecommendations.length > 0) {
-          const formattedTables = chefController.formatSelectedRecommendationsToTables(existingSelectedRecommendations);
-          ws.send(`Recommendations have already been selected for today.\n\n${formattedTables}`);
-          currentStateSetter('authenticated');
-          return;
-        }
-
-        ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
-        selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
-    } else if (selectedIdsByMeal.length === 1) {
-        selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
-        ws.send('Please enter the IDs of the items you wish to select for Lunch, separated by commas:');
-        selectedIdsByMeal.push({ meal: 'Lunch', ids: [] });
-    } else if (selectedIdsByMeal.length === 2) {
-        selectedIdsByMeal[1].ids = msg.split(',').map(id => id.trim());
-        ws.send('Please enter the IDs of the items you wish to select for Dinner, separated by commas:');
-        selectedIdsByMeal.push({ meal: 'Dinner', ids: [] });
-    } else if (selectedIdsByMeal.length === 3) {
-        selectedIdsByMeal[2].ids = msg.split(',').map(id => id.trim());
-        await chefController.selectRecommendations(ws, selectedIdsByMeal);
+      if (existingSelectedRecommendations.length > 0) {
+        const formattedTables = Util.formatSelectedRecommendationsToTables(existingSelectedRecommendations);
+        ws.send(`Recommendations have already been selected for today.\n\n${formattedTables}`);
         currentStateSetter('authenticated');
+        return;
+      }
+
+      ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
+      selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
+    } else if (selectedIdsByMeal.length === 1) {
+      selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
+      ws.send('Please enter the IDs of the items you wish to select for Lunch, separated by commas:');
+      selectedIdsByMeal.push({ meal: 'Lunch', ids: [] });
+    } else if (selectedIdsByMeal.length === 2) {
+      selectedIdsByMeal[1].ids = msg.split(',').map(id => id.trim());
+      ws.send('Please enter the IDs of the items you wish to select for Dinner, separated by commas:');
+      selectedIdsByMeal.push({ meal: 'Dinner', ids: [] });
+    } else if (selectedIdsByMeal.length === 3) {
+      selectedIdsByMeal[2].ids = msg.split(',').map(id => id.trim());
+      await chefController.selectRecommendations(ws, selectedIdsByMeal);
+      currentStateSetter('authenticated');
     }
     const chefRole = await roleService.getRoleByName('Employee');
     if (chefRole) {
