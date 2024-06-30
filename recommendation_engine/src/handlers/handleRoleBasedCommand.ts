@@ -7,6 +7,7 @@ import { EmployeeController } from '../controllers/employeeController';
 import { handleAdminCommands } from './handleAdminCommands';
 import { handleChefCommands } from './handleChefCommands';
 import { handleEmployeeCommands } from './handleEmployeeCommands';
+import { MenuItemController } from '../controllers/menuItemController';
 
 export async function handleRoleBasedCommand(
   ws: WebSocket,
@@ -16,14 +17,15 @@ export async function handleRoleBasedCommand(
   menuItemService: MenuItemService,
   chefController: ChefController,
   employeeController: EmployeeController,
+  menuItemController: MenuItemController,
   currentStateSetter: (state: string) => void
 ) {
   switch (user.role.name) {
     case 'Admin':
-      await handleAdminCommands(ws, command, currentStateSetter, userService, user, menuItemService);
+      await handleAdminCommands(ws, command, currentStateSetter, userService, user, menuItemController, menuItemService);
       break;
     case 'Chef':
-      await handleChefCommands(ws, command, chefController, menuItemService, userService, user, currentStateSetter);
+      await handleChefCommands(ws, command, chefController, menuItemService, userService, user, menuItemController, currentStateSetter);
       break;
     case 'Employee':
       await handleEmployeeCommands(ws, command, employeeController, userService, user, currentStateSetter);

@@ -3,9 +3,8 @@ import { MenuItemController } from '../controllers/menuItemController';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
 
-let newMenuItemDetails: { id?: number, name?: string, description?: string, price?: string, category?: string } = {};
 let updateMenuItemDetails: { id?: number, description?: string, price?: string, category?: string } = {};
-let deleteMenuItemDetails: { id?: number } = {};
+
 
 export async function handleMenuItemInputs(
   ws: WebSocket,

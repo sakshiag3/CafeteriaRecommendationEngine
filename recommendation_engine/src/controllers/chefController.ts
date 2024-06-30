@@ -24,12 +24,7 @@ export class ChefController {
       const existingRecommendations = await this.recommendationService.getRecommendationsByDateRange(start, end);
 
       if (existingRecommendations.length > 0) {
-        const formattedTables = Util.formatRecommendationsToTable(
-          existingRecommendations.map(rec => ({
-            menuItem: rec.menuItem,
-            category: rec.menuItem.category,
-          }))
-        );
+        const formattedTables = Util.formatRecommendationsToTable(existingRecommendations);
         ws.send(`Recommendations already fetched for today:\n\n${formattedTables}`);
         return;
       }
@@ -43,45 +38,38 @@ export class ChefController {
       ws.send(`Today's Recommendations:\n\n${formattedTable}`);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
       ws.send(`Error fetching recommendations: ${errorMessage}. Please try again later.`);
+    }
+  }
+
+  public async getSelectedRecommendations(ws: WebSocket, currentStateSetter: (state: string) => void) {
+    try {
+      const { start, end } = await Util.getCurrentDateRange();
+      const existingSelectedRecommendations = await this.recommendationService.getSelectedRecommendationsByDateRange(start, end);
+
+      if (existingSelectedRecommendations.length > 0) {
+        const formattedTables = Util.formatSelectedRecommendationsToTables(existingSelectedRecommendations);
+        ws.send(`Recommendations have already been selected for today.\n\n${formattedTables}`);
+        currentStateSetter('authenticated');
+      } else {
+        ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
+      }
+    } catch (error) {
+      console.error('Error fetching selected recommendations:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      ws.send(`Error fetching selected recommendations: ${errorMessage}. Please try again later.`);
+      currentStateSetter('authenticated');
     }
   }
 
   public async selectRecommendations(ws: WebSocket, selectedIdsByMeal: { meal: string; ids: string[] }[]) {
     try {
-      const selectedRecommendations: { menuItem: MenuItem; meal: string }[] = [];
-      for (const { meal, ids } of selectedIdsByMeal) {
-        console.log(`Received IDs for ${meal}: ${ids.join(',')}`);
-
-        for (const id of ids) {
-          const menuItemId = parseInt(id, 10);
-          console.log(`Processing MenuItem ID: ${menuItemId} for ${meal}`);
-
-          const menuItem = await this.menuItemService.findById(menuItemId);
-          if (menuItem) {
-            console.log(`Found MenuItem for ID: ${menuItemId}`);
-            selectedRecommendations.push({ menuItem, meal });
-
-            const selectedRecommendation = new SelectedRecommendation();
-            selectedRecommendation.menuItem = menuItem;
-            selectedRecommendation.meal = meal;
-            selectedRecommendation.date = new Date();
-
-            await this.recommendationService.saveSelectedRecommendation(selectedRecommendation);
-          } else {
-            console.log(`No MenuItem found for ID: ${menuItemId}`);
-          }
-        }
-
-        const mealRecommendations = selectedRecommendations.filter(r => r.meal === meal);
-        console.log(`Meal Recommendations for ${meal}: ${JSON.stringify(mealRecommendations.map(r => r.menuItem.name))}`);
-        ws.send(`Selected recommendations for ${meal}: ${JSON.stringify(mealRecommendations.map(r => r.menuItem.name))}`);
-      }
-      ws.send(`Selected recommendations for all meals.`);
+      await this.chefService.selectRecommendations(selectedIdsByMeal);
+      ws.send('Selected recommendations for all meals.');
     } catch (error) {
       console.error('Error selecting recommendations:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
       ws.send(`Error selecting recommendations: ${errorMessage}. Please try again later.`);
     }
   }
@@ -102,11 +90,10 @@ export class ChefController {
       }, {} as { [key: string]: number });
 
       const formattedTable = Util.formatVotesToTable(voteCounts);
-
       ws.send(formattedTable);
     } catch (error) {
       console.error('Error viewing votes:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
       ws.send(`Error viewing votes: ${errorMessage}. Please try again later.`);
     }
   }
@@ -121,7 +108,7 @@ export class ChefController {
       ws.send(`Final selection for ${meal} has been saved.`);
     } catch (error) {
       console.error('Error preparing final selection:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
       ws.send(`Error preparing final selection: ${errorMessage}. Please try again later.`);
     }
   }
@@ -142,7 +129,7 @@ export class ChefController {
       }
     } catch (error) {
       console.error('Error selecting item to prepare:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
       ws.send(`Error selecting item to prepare: ${errorMessage}. Please try again later.`);
     }
   }

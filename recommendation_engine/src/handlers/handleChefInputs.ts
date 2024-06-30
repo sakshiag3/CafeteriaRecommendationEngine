@@ -16,17 +16,7 @@ export async function handleChefInputs(
 ) {
   if (currentState === 'selectRecommendations') {
     if (selectedIdsByMeal.length === 0) {
-      const { start, end } = await Util.getCurrentDateRange();
-      const existingSelectedRecommendations = await chefController.getSelectedRecommendationsByDateRange(start, end);
-
-      if (existingSelectedRecommendations.length > 0) {
-        const formattedTables = Util.formatSelectedRecommendationsToTables(existingSelectedRecommendations);
-        ws.send(`Recommendations have already been selected for today.\n\n${formattedTables}`);
-        currentStateSetter('authenticated');
-        return;
-      }
-
-      ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
+      await chefController.getSelectedRecommendations(ws, currentStateSetter);
       selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
     } else if (selectedIdsByMeal.length === 1) {
       selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
@@ -43,10 +33,7 @@ export async function handleChefInputs(
     }
     const chefRole = await roleService.getRoleByName('Employee');
     if (chefRole) {
-      await userService.createNotification(
-        `Menu Items have been rolled out for today. Please cast your vote!`,
-        chefRole.id
-      );
+      await userService.createNotification(`Menu Items have been rolled out for today. Please cast your vote!`, chefRole.id);
       ws.send('Notification sent to Employee role.');
     }
   } else if (currentState === 'viewVotes') {
@@ -60,28 +47,7 @@ export async function handleChefInputs(
       { meal: 'Dinner', id: dinnerId }
     ];
 
-    const { start, end } = await Util.getCurrentDateRange();
-    const existingSelections = await chefController.getFinalSelectionsForDate(start, end);
-
-    if (existingSelections.length > 0) {
-      ws.send(`Final selections have already been made for today.`);
-      currentStateSetter('authenticated');
-      return;
-    }
-
-    for (const { meal, id } of mealIds) {
-      await chefController.prepareFinalSelection(ws, id, meal);
-    }
-    const chefRole = await roleService.getRoleByName('Employee');
-    if (chefRole) {
-      await userService.createNotification(
-        `Food items have been prepared and served for today. Please provide your feedback!`,
-        chefRole.id
-      );
-      ws.send('Notification sent to Employee role.');
-    }
-
-    ws.send('Final selections have been saved.');
+    await chefController.selectItemToPrepare(ws, mealIds);
     currentStateSetter('authenticated');
   }
 }

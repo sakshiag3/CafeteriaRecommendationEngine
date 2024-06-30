@@ -2,9 +2,9 @@ import { WebSocket } from 'ws';
 import { User } from '../entity/User';
 import { UserService } from '../services/userService';
 import { MenuItemService } from '../services/menuItemService';
-import { showMenuItems } from '../handlers/showMenuItems';
 import { handleLogout } from '../handlers/logoutHandler';
 import { ChefController } from '../controllers/chefController';
+import { MenuItemController } from '../controllers/menuItemController';
 
 export async function handleChefCommands(
   ws: WebSocket,
@@ -13,11 +13,12 @@ export async function handleChefCommands(
   menuItemService: MenuItemService,
   userService: UserService,
   user: User,
+  menuItemController: MenuItemController,
   currentStateSetter: (state: string) => void
 ) {
   switch (command) {
     case '1':
-      await showMenuItems(ws, menuItemService);
+      await menuItemController.showMenuItems(ws, menuItemService);
       break;
     case '2':
       await chefController.fetchRecommendations(ws);

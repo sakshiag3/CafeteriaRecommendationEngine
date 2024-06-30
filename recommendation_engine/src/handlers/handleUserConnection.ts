@@ -73,6 +73,7 @@ export async function handleUserConnection(
           services.menuItemService,
           controllers.chefController,
           controllers.employeeController,
+          controllers.menuItemController,
           currentStateSetter
         );
         showRoleBasedOptions(ws, currentUser.role.name);
