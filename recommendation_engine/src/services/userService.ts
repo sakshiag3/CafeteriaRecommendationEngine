@@ -15,17 +15,6 @@ export class UserService {
     return { exists: !!existingUser };
   }
 
-  //  async getRoles() {
-  //   const roles = await this.userRepository.findRoles();
-  //   return roles.map(role => role.name);
-  // }
-
-  // async checkRole(name: string) {
-  //   const role = await this.userRepository.findRoleByName(name);
-  //   const roles = await this.getRoles();
-  //   return { exists: !!role, roles };
-  // }
-
   async addUser(username: string, password: string, roleName: string) {
     const role = await this.userRepository.findRoleByName(roleName);
     if (!role) {
@@ -46,11 +35,7 @@ export class UserService {
   async getNotifications(user: User) {
     return this.notificationRepository.findNotificationsByRoleAndTime(user.role.id, user.logoutTime);
   }
-
-  async getUsers() {
-    return this.userRepository.findAll();
-  }
-
+  
   async findByUsername(username: string) {
     return this.userRepository.findByUsername(username);
   }

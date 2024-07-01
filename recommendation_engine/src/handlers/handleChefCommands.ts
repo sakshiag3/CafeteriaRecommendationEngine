@@ -18,7 +18,7 @@ export async function handleChefCommands(
 ) {
   switch (command) {
     case '1':
-      await menuItemController.showMenuItems(ws, menuItemService);
+      await menuItemController.showMenuItems(ws);
       break;
     case '2':
       await chefController.fetchRecommendations(ws);

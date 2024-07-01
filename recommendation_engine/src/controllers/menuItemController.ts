@@ -5,39 +5,13 @@ import { MenuItem } from '../entity/MenuItem';
 
 let menuItemsCache: MenuItem[] = [];
 export class MenuItemController {
-  constructor(private menuItemService: MenuItemService) {}
-
-  async handleAddMenuItem(menuItemData: { name: string; description: string; price: string; category: string; availabilityStatus?: boolean }) {
-    const { name, description, price, category, availabilityStatus } = menuItemData;
-    await this.menuItemService.addMenuItem(name, description, price, category, availabilityStatus);
+  private menuItemService: MenuItemService;
+  constructor() { 
+    this.menuItemService=  new MenuItemService()
   }
-
-  async handleUpdateMenuItem(id: number, updates: { description?: string; price?: string; category?: string; availabilityStatus?: boolean }) {
-    await this.menuItemService.updateMenuItem(id, updates);
-  }
-
-  async handleDeleteMenuItem(id: number) {
-    await this.menuItemService.deleteMenuItem(id);
-  }
-
-  async findByName(name: string) {
-    return this.menuItemService.findByName(name);
-  }
-
-  async findById(id: number) {
-    return this.menuItemService.findById(id);
-  }
-
-  async getCategories() {
-    return this.menuItemService.getCategories();
-  }
-
-  async findCategoryByName(name: string) {
-    return this.menuItemService.findCategoryByName(name);
-  }
-
-  async showMenuItems(ws: WebSocket, menuItemService: MenuItemService) {
-    const menuItems: MenuItem[] = await menuItemService.getMenuItems();
+  
+  async showMenuItems(ws: WebSocket) {
+    const menuItems: MenuItem[] = await this.menuItemService.getMenuItems();
     menuItemsCache = menuItems;
     let menuItemTable = 'Menu Items:\n';
     menuItemTable += '+----+-----------------+--------------------+-------+----------------+------------+\n';

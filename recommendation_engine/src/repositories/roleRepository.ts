@@ -8,7 +8,7 @@ export class RoleRepository {
     this.roleRepo = AppDataSource.getRepository(Role);
  }
  
-  async findByName(name: string): Promise<Role | null> {  // Adjust return type to include null
+  async findByName(name: string): Promise<Role | null> {  
     return this.roleRepo.findOne({ where: { name } });
   }
 
@@ -16,7 +16,7 @@ export class RoleRepository {
     return this.roleRepo.find();
   }
 
-  async save(role: Partial<Role>): Promise<void> {  // Accept Partial<Role>
+  async save(role: Partial<Role>): Promise<void> {  
     await this.roleRepo.save(role);
   }
 }

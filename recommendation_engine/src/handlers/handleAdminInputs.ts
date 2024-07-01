@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { AdminController } from '../controllers/adminController';
+import { AdminService } from '../services/adminService';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
 
@@ -7,18 +7,16 @@ export async function handleAdminInputs(
   ws: WebSocket,
   msg: string,
   currentState: string,
-  adminController: AdminController,
-  userService: UserService,
-  roleService: RoleService,
+  adminService: AdminService,
   currentStateSetter: (state: string) => void
 ) {
   switch (currentState) {
     case 'viewDiscardList':
-      await adminController.viewDiscardList(ws);
+      await adminService.viewDiscardList(ws);
       currentStateSetter('authenticated');
       break;
     case 'changeAvailability':
-      await adminController.changeAvailability(ws, msg);
+      await adminService.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
       break;
     default:

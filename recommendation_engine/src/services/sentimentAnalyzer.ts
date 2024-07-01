@@ -16,28 +16,11 @@ class SentimentAnalyzer {
     const sentiment = result[0];
     const star = parseInt(sentiment.label[0]);
 
-    let scoreRange: { min: number, max: number };
-    switch (star) {
-      case 5:
-        scoreRange = { min: 80, max: 100 };
-        break;
-      case 4:
-        scoreRange = { min: 60, max: 80 };
-        break;
-      case 3:
-        scoreRange = { min: 40, max: 60 };
-        break;
-      case 2:
-        scoreRange = { min: 20, max: 40 };
-        break;
-      case 1:
-        scoreRange = { min: 0, max: 20 };
-        break;
-      default:
-        throw new Error('Invalid sentiment label');
-    }
-
-    const scaledScore = scoreRange.min + (scoreRange.max - scoreRange.min) * sentiment.score;
+    // Calculate the base score according to star rating
+    let baseScore = (star - 1) * 20;
+    
+    // Scale the sentiment score within the current star rating range
+    const scaledScore = baseScore + (sentiment.score * 20);
 
     return parseFloat(scaledScore.toFixed(2));
   }

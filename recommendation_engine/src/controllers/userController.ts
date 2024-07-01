@@ -1,9 +1,15 @@
 import { UserService } from '../services/userService';
 import { User } from '../entity/User';
+import { RoleService } from '../services/roleService';
 
 export class UserController {
-  constructor(private userService: UserService) {}
-
+  private userService: UserService;
+  private roleService: RoleService;
+  constructor() { 
+    this.userService=  new UserService();
+    this.roleService=  new RoleService();
+  }
+  
   async handleAddUser(userData: { username: string; password: string; role: string }) {
     const { username, password, role } = userData;
     await this.userService.addUser(username, password, role);
@@ -24,8 +30,8 @@ export class UserController {
   async checkUsername(username: string) {
     return this.userService.checkUsername(username);
   }
-
-  async getUsers() {
-    return this.userService.getUsers();
+  async handleAddRole(roleData: { name: string }) {
+    const { name } = roleData;
+    await this.roleService.addRole(name);
   }
 }

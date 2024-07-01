@@ -26,9 +26,7 @@ export class ChefController {
         return;
       }
 
-      const recommendations = await this.recommendationService.fetchRecommendations(
-        this.menuItemRepository
-      );
+      const recommendations = await this.recommendationService.fetchRecommendations();
 
       const formattedTable = Util.formatRecommendationsToTable(recommendations);
       ws.send(`Today's Recommendations:\n\n${formattedTable}`);
@@ -93,14 +91,22 @@ export class ChefController {
       ws.send(`Error viewing votes: ${errorMessage}. Please try again later.`);
     }
   }
-
+  async parseMealIds(msg: string): Promise<{ meal: string; id: number; }[]> {
+    const [breakfastId, lunchId, dinnerId] = msg.split(',').map(id => parseInt(id.trim(), 10));
+    return [
+      { meal: 'Breakfast', id: breakfastId },
+      { meal: 'Lunch', id: lunchId },
+      { meal: 'Dinner', id: dinnerId }
+    ];
+  }
+  
   public async getSelectedRecommendationsByDateRange(start: Date, end: Date) {
     return this.recommendationService.getSelectedRecommendationsByDateRange(start, end);
   }
 
   public async prepareFinalSelection(ws: WebSocket, selectedRecommendationId: number, meal: string) {
     try {
-      const finalSelection = await this.chefService.prepareItem(selectedRecommendationId, meal);
+      await this.chefService.prepareItem(selectedRecommendationId, meal);
       ws.send(`Final selection for ${meal} has been saved.`);
     } catch (error) {
       console.error('Error preparing final selection:', error);

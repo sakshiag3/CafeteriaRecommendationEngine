@@ -26,7 +26,7 @@ export async function handleEmployeeCommands(
       break;
     case '4':
       ws.send('Employee: Give Feedback');
-      ws.send('Please enter your feedback in the format "menuItemId;rating;comment":');
+      ws.send('Please enter your feedback in the format "menuItemId,rating,comment":');
       currentStateSetter('employeeGiveFeedback');
       break;
     case 'logout':

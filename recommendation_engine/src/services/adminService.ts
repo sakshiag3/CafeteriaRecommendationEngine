@@ -1,17 +1,16 @@
 import { WebSocket } from 'ws';
 import { MenuItemRepository } from '../repositories/menuItemRepository';
-import { Repository } from 'typeorm';
-import { MenuItem } from '../entity/MenuItem';
-import { Feedback } from '../entity/Feedback';
-import { SentimentScore } from '../entity/SentimentScore';
 import { Util } from '../utils/Util';
+import { RecommendationService } from './recommendationService';
 
-export class AdminController {
-  constructor(
-    private menuItemRepository: MenuItemRepository, // Use MenuItemRepository
-    private feedbackRepository: Repository<Feedback>,
-    private sentimentScoreRepository: Repository<SentimentScore>
-  ) {}
+export class AdminService {
+  private menuItemRepository: MenuItemRepository;
+
+  private recommendationService: RecommendationService;
+  constructor() {
+    this.menuItemRepository = new MenuItemRepository();
+    this.recommendationService = new RecommendationService();
+  }
 
   async viewDiscardList(ws: WebSocket) {
     try {
@@ -30,9 +29,9 @@ export class AdminController {
     const discardList = [];
 
     for (const item of menuItems) {
-      if (!item.id) continue; // Ensure item.id is defined
-      const avgRating = await this.getAverageRating(item.id);
-      const sentimentScore = await this.getSentimentScore(item.id);
+      if (!item.id) continue; 
+      const avgRating = await this.recommendationService.getAverageRating(item.id);
+      const sentimentScore = await this.recommendationService.getSentimentScore(item.id);
       if (avgRating > 0 && avgRating < 2 && sentimentScore > 0 && sentimentScore < 25){ 
         discardList.push({ item, avgRating, sentimentScore });
       }
@@ -41,17 +40,6 @@ export class AdminController {
     return discardList;
   }
 
-  async getAverageRating(menuItemId: number): Promise<number> {
-    const feedbacks = await this.feedbackRepository.find({ where: { menuItem: { id: menuItemId } } });
-    const totalRating = feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0);
-    return feedbacks.length ? totalRating / feedbacks.length : 0;
-  }
-
-  async getSentimentScore(menuItemId: number): Promise<number> {
-    const sentiments = await this.sentimentScoreRepository.find({ where: { menuItem: { id: menuItemId } } });
-    const totalScore = sentiments.reduce((acc, sentiment) => acc + sentiment.score, 0);
-    return sentiments.length ? totalScore / sentiments.length : 0;
-  }
 
   async changeAvailability(ws: WebSocket, msg: string) {
     try {

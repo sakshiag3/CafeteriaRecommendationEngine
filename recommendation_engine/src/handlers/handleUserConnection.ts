@@ -10,8 +10,7 @@ import { handleAdminCommands } from './handleAdminCommands';
 export async function handleUserConnection(
   ws: WebSocket,
   controllers: any,
-  services: any,
-  repositories: any
+  services: any
 ) {
   let currentUser: any | null = null;
   let currentState = 'username';
@@ -95,19 +94,19 @@ export async function handleUserConnection(
       await controllers.employeeController.castVote(ws, currentUser.id, parseInt(menuItemId, 10), meal);
       currentState = 'authenticated';
     } else if (currentState === 'employeeGiveFeedback') {
-      const [menuItemId, rating, ...commentParts] = msg.split(';');
-      const comment = commentParts.join(';').trim();
+      const [menuItemId, rating, ...commentParts] = msg.split(',');
+      const comment = commentParts.join(',').trim();
       await controllers.employeeController.giveFeedback(ws, currentUser.id, parseInt(menuItemId, 10), parseInt(rating, 10), comment);
       currentStateSetter('authenticated');
     } else if (currentState === 'changeAvailability') {
       await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser') || currentState.startsWith('updateUser') || currentState.startsWith('deleteUser')) {
-      await handleUserInputs(ws, msg, currentState, controllers.userController, controllers.roleController, currentStateSetter);
+      await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, currentStateSetter);
     } else if (currentState.startsWith('addMenuItem') || currentState.startsWith('updateMenuItem') || currentState.startsWith('deleteMenuItem')) {
-      await handleMenuItemInputs(ws, msg, currentState, controllers.menuItemController, services.userService, services.roleService, currentStateSetter);
+      await handleMenuItemInputs(ws, msg, currentState, services.userService, services.roleService, services.menuItemService, currentStateSetter);
     } else if (currentState === 'addRole') {
-      await controllers.roleController.handleAddRole({ name: msg });
+      await controllers.userController.handleAddRole({ name: msg });
     }
   });
 }

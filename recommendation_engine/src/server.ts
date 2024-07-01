@@ -11,7 +11,7 @@ AppDataSource.initialize().then(async connection => {
   const wss = new WebSocket.Server({ port: 8080 });
 
   wss.on('connection', (ws: WebSocket) => {
-    handleUserConnection(ws, controllers, services, repositories);
+    handleUserConnection(ws, controllers, services);
   });
 
   console.log('WebSocket server is running on ws://localhost:8080');

@@ -20,19 +20,13 @@ import { MenuItemService } from './services/menuItemService';
 import { RecommendationService } from './services/recommendationService';
 import { ChefService } from './services/chefService';
 import { UserController } from './controllers/userController';
-import { RoleController } from './controllers/roleController';
 import { MenuItemController } from './controllers/menuItemController';
 import { ChefController } from './controllers/chefController';
 import { EmployeeController } from './controllers/employeeController';
-import { AdminController } from './controllers/adminController';
-import { ChefRepository } from './repositories/chefRepository';
+import { AdminService } from './services/adminService';
 
 export function initializeRepositories(dataSource: DataSource) {
   return {
-    userRepository: new UserRepository(),
-    roleRepository: new RoleRepository(),
-    menuItemRepository: new MenuItemRepository(),
-    notificationRepository: new NotificationRepository(),
     recommendationRepository: dataSource.getRepository(Recommendation),
     selectedRecommendationRepository: dataSource.getRepository(SelectedRecommendation),
     finalSelectionRepository: dataSource.getRepository(FinalSelection),
@@ -47,39 +41,22 @@ export function initializeServices(repositories: any) {
     userService: new UserService(),
     roleService: new RoleService(),
     menuItemService: new MenuItemService(),
-    recommendationService: new RecommendationService(
-      repositories.recommendationRepository,
-      repositories.selectedRecommendationRepository,
-      repositories.feedbackRepository,
-      repositories.sentimentScoreRepository
-    ),
-    chefService: new ChefService()
+    recommendationService: new RecommendationService(),
+    chefService: new ChefService(),
+    adminService: new AdminService()
   };
 }
 
 export function initializeControllers(services: any, repositories: any) {
   return {
-    userController: new UserController(services.userService),
-    roleController: new RoleController(services.roleService),
-    menuItemController: new MenuItemController(services.menuItemService),
+    userController: new UserController(),
+    menuItemController: new MenuItemController(),
     chefController: new ChefController(
       services.recommendationService,
       services.chefService,
       services.menuItemService,
       repositories.menuItemRepository
     ),
-    employeeController: new EmployeeController(
-      repositories.selectedRecommendationRepository,
-      repositories.finalSelectionRepository,
-      repositories.voteRepository,
-      repositories.feedbackRepository,
-      repositories.sentimentScoreRepository,
-      repositories.menuItemRepository
-    ),
-    adminController: new AdminController(
-      repositories.menuItemRepository,
-      repositories.feedbackRepository,
-      repositories.sentimentScoreRepository
-    )
+    employeeController: new EmployeeController()
   };
 }

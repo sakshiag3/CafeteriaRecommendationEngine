@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
-import { MenuItemController } from '../controllers/menuItemController';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
+import { MenuItemService } from '../services/menuItemService';
 
 let updateMenuItemDetails: { id?: number; description?: string; price?: string; category?: string } = {};
 
@@ -9,19 +9,19 @@ export async function handleMenuItemInputs(
   ws: WebSocket,
   msg: string,
   state: string,
-  menuItemController: MenuItemController,
   userService: UserService,
   roleService: RoleService,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   console.log(`handleMenuItemInputs: state = ${state}, msg = ${msg}`);
 
   if (state.startsWith('addMenuItem')) {
-    await handleAddMenuItemStates(ws, msg, state, menuItemController, userService, roleService, currentStateSetter);
+    await handleAddMenuItemStates(ws, msg, state, menuItemService, userService, roleService, currentStateSetter);
   } else if (state.startsWith('deleteMenuItem')) {
-    await handleDeleteMenuItemStates(ws, msg, state, menuItemController, currentStateSetter);
+    await handleDeleteMenuItemStates(ws, msg, state, menuItemService, currentStateSetter);
   } else if (state.startsWith('updateMenuItem')) {
-    await handleUpdateMenuItemStates(ws, msg, state, menuItemController, currentStateSetter);
+    await handleUpdateMenuItemStates(ws, msg, state, menuItemService, currentStateSetter);
   } else {
     ws.send('Invalid state. Please try again.');
   }
@@ -31,7 +31,7 @@ async function handleAddMenuItemStates(
   ws: WebSocket,
   msg: string,
   state: string,
-  menuItemController: MenuItemController,
+  menuItemService: MenuItemService,
   userService: UserService,
   roleService: RoleService,
   currentStateSetter: (state: string) => void
@@ -44,21 +44,16 @@ async function handleAddMenuItemStates(
       return;
     }
 
-    const existingMenuItem = await menuItemController.findByName(name);
+    const existingMenuItem = await menuItemService.findByName(name);
     if (existingMenuItem) {
       ws.send(`Error: Menu item with name ${name} already exists. Please enter a different name:`);
     } else {
-      const categoryEntity = await menuItemController.findCategoryByName(category);
+      const categoryEntity = await menuItemService.findCategoryByName(category);
       if (!categoryEntity) {
-        const categories = await menuItemController.getCategories();
+        const categories = await menuItemService.getCategories();
         ws.send(`Error: Category ${category} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
       } else {
-        await menuItemController.handleAddMenuItem({
-          name,
-          description,
-          price,
-          category
-        });
+        await menuItemService.addMenuItem(name, description, price, category);
         ws.send(`Menu item ${name} added successfully.`);
 
         const chefRole = await roleService.getRoleByName('Chef');
@@ -77,7 +72,7 @@ async function handleDeleteMenuItemStates(
   ws: WebSocket,
   msg: string,
   state: string,
-  menuItemController: MenuItemController,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   if (state === 'deleteMenuItemStart') {
@@ -89,11 +84,11 @@ async function handleDeleteMenuItemStates(
       ws.send('Invalid ID. Please enter a valid numeric ID.');
       return;
     }
-    const existingMenuItem = await menuItemController.findById(id);
+    const existingMenuItem = await menuItemService.findById(id);
     if (!existingMenuItem) {
       ws.send(`Error: Menu item with ID ${id} does not exist. Please enter a valid ID.`);
     } else {
-      await menuItemController.handleDeleteMenuItem(id);
+      await menuItemService.deleteMenuItem(id);
       ws.send(`Menu item with ID ${id} deleted successfully.`);
       currentStateSetter('authenticated');
     }
@@ -104,27 +99,27 @@ async function handleUpdateMenuItemStates(
   ws: WebSocket,
   msg: string,
   state: string,
-  menuItemController: MenuItemController,
+  menuItemService:MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   if (state === 'updateMenuItemStart') {
     ws.send('Please enter the ID of the menu item to update:');
     currentStateSetter('updateMenuItemId');
   } else if (state === 'updateMenuItemId') {
-    await handleUpdateMenuItemIdState(ws, msg, menuItemController, currentStateSetter);
+    await handleUpdateMenuItemIdState(ws, msg, menuItemService, currentStateSetter);
   } else if (state === 'updateMenuItemDescription') {
     await handleUpdateMenuItemDescriptionState(ws, msg, currentStateSetter);
   } else if (state === 'updateMenuItemPrice') {
-    await handleUpdateMenuItemPriceState(ws, msg, menuItemController, currentStateSetter);
+    await handleUpdateMenuItemPriceState(ws, msg, menuItemService, currentStateSetter);
   } else if (state === 'updateMenuItemCategory') {
-    await handleUpdateMenuItemCategoryState(ws, msg, menuItemController, currentStateSetter);
+    await handleUpdateMenuItemCategoryState(ws, msg, menuItemService, currentStateSetter);
   }
 }
 
 async function handleUpdateMenuItemIdState(
   ws: WebSocket,
   msg: string,
-  menuItemController: MenuItemController,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   const id = parseInt(msg, 10); // Convert msg to a number
@@ -132,7 +127,7 @@ async function handleUpdateMenuItemIdState(
     ws.send('Invalid ID. Please enter a valid numeric ID.');
     return;
   }
-  const existingMenuItem = await menuItemController.findById(id);
+  const existingMenuItem = await menuItemService.findById(id);
   if (!existingMenuItem) {
     ws.send(`Error: Menu item with ID ${id} does not exist. Please enter a valid ID.`);
   } else {
@@ -155,11 +150,11 @@ async function handleUpdateMenuItemDescriptionState(
 async function handleUpdateMenuItemPriceState(
   ws: WebSocket,
   msg: string,
-  menuItemController: MenuItemController,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   updateMenuItemDetails.price = msg || undefined;
-  const categories = await menuItemController.getCategories();
+  const categories = await menuItemService.getCategories();
   ws.send(`Enter new category for the menu item (or press enter to skip). Available categories: ${categories.map(category => category.name).join(', ')}:`);
   currentStateSetter('updateMenuItemCategory');
 }
@@ -167,16 +162,16 @@ async function handleUpdateMenuItemPriceState(
 async function handleUpdateMenuItemCategoryState(
   ws: WebSocket,
   msg: string,
-  menuItemController: MenuItemController,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
-  const category = await menuItemController.findCategoryByName(msg);
+  const category = await menuItemService.findCategoryByName(msg);
   if (!category && msg) {
-    const categories = await menuItemController.getCategories();
+    const categories = await menuItemService.getCategories();
     ws.send(`Error: Category ${msg} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
   } else {
     updateMenuItemDetails.category = msg || undefined;
-    await menuItemController.handleUpdateMenuItem(updateMenuItemDetails.id!, {
+    await menuItemService.updateMenuItem(updateMenuItemDetails.id!, {
       description: updateMenuItemDetails.description,
       price: updateMenuItemDetails.price,
       category: updateMenuItemDetails.category

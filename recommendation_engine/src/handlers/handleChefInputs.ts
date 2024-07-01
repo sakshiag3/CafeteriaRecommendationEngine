@@ -73,19 +73,12 @@ async function handleSelectItemToPrepare(
   chefController: ChefController,
   currentStateSetter: (state: string) => void
 ) {
-  const mealIds = parseMealIds(msg);
+  const mealIds = await chefController.parseMealIds(msg);
   await chefController.selectItemToPrepare(ws, mealIds);
   currentStateSetter('authenticated');
 }
 
-function parseMealIds(msg: string): { meal: string; id: number }[] {
-  const [breakfastId, lunchId, dinnerId] = msg.split(',').map(id => parseInt(id.trim(), 10));
-  return [
-    { meal: 'Breakfast', id: breakfastId },
-    { meal: 'Lunch', id: lunchId },
-    { meal: 'Dinner', id: dinnerId }
-  ];
-}
+
 
 async function notifyEmployees(userService: UserService, roleService: RoleService, ws: WebSocket) {
   const chefRole = await roleService.getRoleByName('Employee');

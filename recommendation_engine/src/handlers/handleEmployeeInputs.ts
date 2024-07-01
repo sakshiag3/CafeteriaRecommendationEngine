@@ -1,11 +1,13 @@
 import { WebSocket } from 'ws';
 import { EmployeeController } from '../controllers/employeeController';
+import { EmployeeService } from '../services/employeeService';
 
 export async function handleEmployeeInputs(
   ws: WebSocket,
   msg: string,
   currentState: string,
   employeeController: EmployeeController,
+  employeeService:EmployeeService,
   currentStateSetter: (state: string) => void,
   userId: number
 ) {
@@ -14,7 +16,7 @@ export async function handleEmployeeInputs(
       await handleCastVote(ws, msg, employeeController, userId, currentStateSetter);
       break;
     case 'employeeGiveFeedback':
-      await handleGiveFeedback(ws, msg, employeeController, userId, currentStateSetter);
+      await handleGiveFeedback(ws, msg, employeeController, employeeService, userId, currentStateSetter);
       break;
     default:
       ws.send('Unknown state. Please try again.');
@@ -37,21 +39,21 @@ async function handleGiveFeedback(
   ws: WebSocket,
   msg: string,
   employeeController: EmployeeController,
+  employeeService: EmployeeService,
   userId: number,
   currentStateSetter: (state: string) => void
 ) {
-  const feedbackParts = msg.split(';').map(part => part.trim());
+  const feedbackParts = msg.split(',').map(part => part.trim());
   const menuItemId = parseInt(feedbackParts[0], 10);
   const rating = parseInt(feedbackParts[1], 10);
-  const comment = feedbackParts.slice(2).join(';');
+  const comment = feedbackParts.slice(2).join(',');
 
   if (isNaN(menuItemId) || isNaN(rating) || rating < 1 || rating > 5) {
     ws.send('Invalid input. Please ensure the menu item ID is a number, the rating is between 1 and 5, and the comment is provided.');
     return;
   }
 
-  // Validate if the menuItemId exists
-  const menuItemExists = await employeeController.checkMenuItemExists(menuItemId);
+  const menuItemExists = await employeeService.checkMenuItemExists(menuItemId);
   if (!menuItemExists) {
     ws.send('Invalid menu item ID. Please ensure the menu item exists.');
     return;
