@@ -1,36 +1,45 @@
 import { Repository } from 'typeorm';
 import { User } from '../entity/User';
 import { Role } from '../entity/Role';
-import { Notification } from '../entity/Notification'; // Assuming Notification entity
+import { Notification } from '../entity/Notification';
 
+import { AppDataSource } from '../data-source';
 export class UserRepository {
-  constructor(private repository: Repository<User>, private roleRepository: Repository<Role>) {}
-
-  async findByUsername(username: string) {
-    return this.repository.findOne({ where: { username }, relations: ['role'] });
+  private userRepository: Repository<User>
+  private roleRepository: Repository<Role>
+  
+  constructor() {
+    this.userRepository = AppDataSource.getRepository(User);
+    this.roleRepository = AppDataSource.getRepository(Role);
+ }
+ 
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { username },
+      relations: ['role'],
+    });
   }
 
-  async findRoles() {
+  async findRoles(): Promise<Role[]> {
     return this.roleRepository.find();
   }
 
-  async findRoleByName(name: string) {
+  async findRoleByName(name: string): Promise<Role | null> {
     return this.roleRepository.findOne({ where: { name } });
   }
 
-  async save(user: User) {
-    return this.repository.save(user);
+  async save(user: User): Promise<User> {
+    return this.userRepository.save(user);
   }
 
-  async findNotifications(user: User) {
-    return this.repository
-      .createQueryBuilder('user')
-      .relation(User, 'notifications')
-      .of(user)
-      .loadMany();
-  }
+  // async findNotifications(user: User): Promise<Notification[]> {
+  //   return this.notificationRepository.find({
+  //     where: { user: { id: user.id } },
+  //     relations: ['user'],
+  //   });
+  // }
 
-  async findAll() {
-    return this.repository.find({ relations: ['role'] });
+  async findAll(): Promise<User[]> {
+    return this.userRepository.find({ relations: ['role'] });
   }
 }

@@ -4,11 +4,12 @@ import { User } from '../entity/User';
 import bcrypt from 'bcrypt';
 
 export class UserService {
-  constructor(
-    private userRepository: UserRepository,
-    private notificationRepository: NotificationRepository
-  ) {}
-
+  private userRepository: UserRepository;
+  private notificationRepository: NotificationRepository;
+  constructor() {
+    this.userRepository = new UserRepository();
+    this.notificationRepository = new NotificationRepository();
+  }
   async checkUsername(username: string) {
     const existingUser = await this.userRepository.findByUsername(username);
     return { exists: !!existingUser };

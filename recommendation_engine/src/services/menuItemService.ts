@@ -2,7 +2,10 @@ import { MenuItem } from '../entity/MenuItem'; // Add this import
 import { MenuItemRepository } from '../repositories/menuItemRepository';
 
 export class MenuItemService {
-  constructor(private menuItemRepository: MenuItemRepository) {}
+  private menuItemRepository: MenuItemRepository;
+  constructor() { 
+    this.menuItemRepository=  new MenuItemRepository()
+  }
 
   async addMenuItem(name: string, description: string, price: string, category: string, availabilityStatus = true) {
     const categoryEntity = await this.menuItemRepository.findCategoryByName(category);

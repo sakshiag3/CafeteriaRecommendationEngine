@@ -2,7 +2,9 @@ import { RoleRepository } from '../repositories/roleRepository';
 import { Role } from '../entity/Role';
 
 export class RoleService {
-  constructor(private roleRepository: RoleRepository) {}
+  private roleRepository: RoleRepository
+  constructor() {
+    this.roleRepository= new RoleRepository() }
 
   async addRole(name: string) {
     const role = await this.roleRepository.findByName(name);

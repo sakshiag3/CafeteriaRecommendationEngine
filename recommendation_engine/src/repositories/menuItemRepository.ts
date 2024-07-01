@@ -1,13 +1,16 @@
 import { Repository } from 'typeorm';
 import { MenuItem } from '../entity/MenuItem';
 import { FoodCategory } from '../entity/FoodCategory';
+import { AppDataSource } from '../data-source';
 
 export class MenuItemRepository {
-  constructor(
-    private readonly menuItemRepo: Repository<MenuItem>,
-    private readonly foodCategoryRepo: Repository<FoodCategory>
-  ) {}
-
+  private menuItemRepo: Repository<MenuItem>
+  private foodCategoryRepo: Repository<FoodCategory>
+  constructor() {
+    this.menuItemRepo = AppDataSource.getRepository(MenuItem);
+    this.foodCategoryRepo = AppDataSource.getRepository(FoodCategory);
+ }
+ 
   async findById(id: number): Promise<MenuItem | null> {
     return this.menuItemRepo.findOne({ where: { id } });
   }

@@ -1,22 +1,14 @@
-import { AppDataSource } from '../data-source';
-import { Between, Repository } from 'typeorm';
-import { Recommendation } from '../entity/Recommendation';
+import { ChefRepository } from '../repositories/chefRepository';
+import { MenuItem } from '../entity/MenuItem';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { Vote } from '../entity/Vote';
 import { FinalSelection } from '../entity/FinalSelection';
-import { MenuItem } from '../entity/MenuItem';
 
 export class ChefService {
-  private menuItemRepository: Repository<MenuItem>;
-  private selectedRecommendationRepository: Repository<SelectedRecommendation>;
-  private voteRepository: Repository<Vote>;
-  private finalSelectionRepository: Repository<FinalSelection>;
+  private chefRepository: ChefRepository;
 
   constructor() {
-    this.menuItemRepository = AppDataSource.getRepository(MenuItem);
-    this.selectedRecommendationRepository = AppDataSource.getRepository(SelectedRecommendation);
-    this.voteRepository = AppDataSource.getRepository(Vote);
-    this.finalSelectionRepository = AppDataSource.getRepository(FinalSelection);
+    this.chefRepository = new ChefRepository();
   }
 
   public async selectRecommendations(selectedIdsByMeal: { meal: string; ids: string[] }[]) {
@@ -24,7 +16,7 @@ export class ChefService {
     for (const { meal, ids } of selectedIdsByMeal) {
       for (const id of ids) {
         const menuItemId = parseInt(id, 10);
-        const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
+        const menuItem = await this.chefRepository.findMenuItemById(menuItemId);
         if (menuItem) {
           selectedRecommendations.push({ menuItem, meal });
 
@@ -33,17 +25,14 @@ export class ChefService {
           selectedRecommendation.meal = meal;
           selectedRecommendation.date = new Date();
 
-          await this.selectedRecommendationRepository.save(selectedRecommendation);
+          await this.chefRepository.saveSelectedRecommendation(selectedRecommendation);
         }
       }
     }
   }
 
   public async prepareItem(id: number, meal: string): Promise<FinalSelection> {
-    const selectedRecommendation = await this.selectedRecommendationRepository.findOne({
-      where: { id },
-      relations: ['menuItem'],
-    });
+    const selectedRecommendation = await this.chefRepository.findSelectedRecommendationById(id);
     if (!selectedRecommendation) {
       throw new Error('Selected recommendation not found');
     }
@@ -53,24 +42,14 @@ export class ChefService {
     finalSelection.meal = meal;
     finalSelection.date = new Date();
 
-    return this.finalSelectionRepository.save(finalSelection);
+    return this.chefRepository.saveFinalSelection(finalSelection);
   }
 
   public async getVotesForDateRange(start: Date, end: Date): Promise<Vote[]> {
-    return this.voteRepository.find({
-      where: {
-        date: Between(start, end),
-      },
-      relations: ['selectedRecommendation', 'selectedRecommendation.menuItem', 'user'],
-    });
+    return this.chefRepository.findVotesForDateRange(start, end);
   }
 
   public async getFinalSelectionsForDate(start: Date, end: Date): Promise<FinalSelection[]> {
-    return this.finalSelectionRepository.find({
-      where: {
-        date: Between(start, end),
-      },
-      relations: ['selectedRecommendation', 'selectedRecommendation.menuItem'],
-    });
+    return this.chefRepository.findFinalSelectionsForDate(start, end);
   }
 }

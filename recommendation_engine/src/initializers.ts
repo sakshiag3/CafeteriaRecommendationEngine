@@ -25,27 +25,28 @@ import { MenuItemController } from './controllers/menuItemController';
 import { ChefController } from './controllers/chefController';
 import { EmployeeController } from './controllers/employeeController';
 import { AdminController } from './controllers/adminController';
+import { ChefRepository } from './repositories/chefRepository';
 
 export function initializeRepositories(dataSource: DataSource) {
   return {
-    userRepository: new UserRepository(dataSource.getRepository(User), dataSource.getRepository(Role)),
-    roleRepository: new RoleRepository(dataSource.getRepository(Role)),
-    menuItemRepository: new MenuItemRepository(dataSource.getRepository(MenuItem), dataSource.getRepository(FoodCategory)),
-    notificationRepository: new NotificationRepository(dataSource.getRepository(Notification)),
+    userRepository: new UserRepository(),
+    roleRepository: new RoleRepository(),
+    menuItemRepository: new MenuItemRepository(),
+    notificationRepository: new NotificationRepository(),
     recommendationRepository: dataSource.getRepository(Recommendation),
     selectedRecommendationRepository: dataSource.getRepository(SelectedRecommendation),
     finalSelectionRepository: dataSource.getRepository(FinalSelection),
     voteRepository: dataSource.getRepository(Vote),
     feedbackRepository: dataSource.getRepository(Feedback),
-    sentimentScoreRepository: dataSource.getRepository(SentimentScore)
+    sentimentScoreRepository: dataSource.getRepository(SentimentScore),
   };
 }
 
 export function initializeServices(repositories: any) {
   return {
-    userService: new UserService(repositories.userRepository, repositories.notificationRepository),
-    roleService: new RoleService(repositories.roleRepository),
-    menuItemService: new MenuItemService(repositories.menuItemRepository),
+    userService: new UserService(),
+    roleService: new RoleService(),
+    menuItemService: new MenuItemService(),
     recommendationService: new RecommendationService(
       repositories.recommendationRepository,
       repositories.selectedRecommendationRepository,
