@@ -30,7 +30,6 @@ export class RecommendationService {
         ...this.getTopItems(dinnerItems, 3, 'Dinner')
       ];
 
-      // Save the recommendations
       for (const rec of recommendations) {
         const recommendation = new Recommendation();
         recommendation.menuItem = rec.menuItem;

@@ -33,10 +33,12 @@ export class EmployeeService {
       relations: ['menuItem'],
     });
   }
+
   public async checkMenuItemExists(menuItemId: number): Promise<boolean> {
     const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     return !!menuItem;
   }
+  
   public async getPreparedMenuItems(start: Date, end: Date) {
     return this.finalSelectionRepository.find({
       where: { date: Between(start, end) },

@@ -20,10 +20,6 @@ export class UserRepository {
     });
   }
 
-  async findRoles(): Promise<Role[]> {
-    return this.roleRepository.find();
-  }
-
   async findRoleByName(name: string): Promise<Role | null> {
     return this.roleRepository.findOne({ where: { name } });
   }
@@ -31,15 +27,5 @@ export class UserRepository {
   async save(user: User): Promise<User> {
     return this.userRepository.save(user);
   }
-
-  // async findNotifications(user: User): Promise<Notification[]> {
-  //   return this.notificationRepository.find({
-  //     where: { user: { id: user.id } },
-  //     relations: ['user'],
-  //   });
-  // }
-
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({ relations: ['role'] });
-  }
+  
 }

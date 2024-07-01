@@ -25,7 +25,7 @@ export class AdminService {
   }
 
   async getDiscardList() {
-    const menuItems = await this.menuItemRepository.findMenuItems(); // Use findMenuItems method
+    const menuItems = await this.menuItemRepository.findMenuItems(); 
     const discardList = [];
 
     for (const item of menuItems) {
@@ -43,17 +43,16 @@ export class AdminService {
 
   async changeAvailability(ws: WebSocket, msg: string) {
     try {
-        console.log('Received change availability message:', msg); // Debug statement
         const [itemId, availability] = msg.split(',').map(part => part.trim());
-        console.log('Parsed itemId:', itemId, 'availability:', availability); // Debug statement
+        console.log('Parsed itemId:', itemId, 'availability:', availability);
 
         const menuItem = await this.menuItemRepository.findById(parseInt(itemId));
         if (menuItem) {
             const availabilityStatus = availability.toLowerCase() === 'true';
-            console.log('Setting availability to:', availabilityStatus); // Debug statement
+            console.log('Setting availability to:', availabilityStatus); 
             menuItem.availabilityStatus = availabilityStatus;
             await this.menuItemRepository.save(menuItem);
-            console.log('Menu item saved:', menuItem); // Debug statement
+            console.log('Menu item saved:', menuItem);
             ws.send(`Menu item ${menuItem.name} availability changed to ${availabilityStatus}.`);
         } else {
             ws.send('Menu item not found.');

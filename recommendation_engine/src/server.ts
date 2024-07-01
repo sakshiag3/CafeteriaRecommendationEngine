@@ -1,12 +1,11 @@
 import { AppDataSource } from './data-source'; 
 import WebSocket from 'ws';
-import { initializeRepositories, initializeServices, initializeControllers } from './initializers';
+import {  initializeServices, initializeControllers } from './initializers';
 import { handleUserConnection } from './handlers/handleUserConnection';
 
 AppDataSource.initialize().then(async connection => {
-  const repositories = initializeRepositories(AppDataSource);
-  const services = initializeServices(repositories);
-  const controllers = initializeControllers(services, repositories);
+  const services = initializeServices();
+  const controllers = initializeControllers();
 
   const wss = new WebSocket.Server({ port: 8080 });
 

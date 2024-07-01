@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { UserController } from '../controllers/userController';
 import { RoleService } from '../services/roleService';
+import { UserService } from '../services/userService';
 
 let newUserDetails: { username?: string; password?: string; roleName?: string } = {};
 
@@ -10,11 +11,12 @@ export async function handleUserInputs(
   state: string,
   userController: UserController,
   roleService: RoleService,
+  userService: UserService,
   currentStateSetter: (state: string) => void
 ) {
   switch (state) {
     case 'addUserUsername':
-      await handleAddUserUsername(ws, msg, userController, currentStateSetter);
+      await handleAddUserUsername(ws, msg, userService, currentStateSetter);
       break;
     case 'addUserPassword':
       await handleAddUserPassword(ws, msg, roleService, currentStateSetter);
@@ -30,10 +32,10 @@ export async function handleUserInputs(
 async function handleAddUserUsername(
   ws: WebSocket,
   msg: string,
-  userController: UserController,
+  userService: UserService,
   currentStateSetter: (state: string) => void
 ) {
-  const existingUser = await userController.findByUsername(msg);
+  const existingUser = await userService.findByUsername(msg);
   if (existingUser) {
     ws.send(`Error: User with username ${msg} already exists. Please enter a different username:`);
   } else {

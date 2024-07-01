@@ -2,18 +2,22 @@ import { WebSocket } from 'ws';
 import { RecommendationService } from '../services/recommendationService';
 import { MenuItemService } from '../services/menuItemService';
 import { MenuItemRepository } from '../repositories/menuItemRepository';
-import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { FinalSelection } from '../entity/FinalSelection';
 import { ChefService } from '../services/chefService';
 import { Util } from '../utils/Util';
 
 export class ChefController {
-  constructor(
-    private recommendationService: RecommendationService,
-    private chefService: ChefService,
-    private menuItemService: MenuItemService,
-    private menuItemRepository: MenuItemRepository
-  ) {}
+  private recommendationService: RecommendationService;
+  private chefService: ChefService;
+
+  private menuItemService: MenuItemService;
+  private menuItemRepository: MenuItemRepository;
+  constructor() {
+    this.recommendationService = new RecommendationService();
+    this.chefService = new ChefService();
+    this.menuItemService= new MenuItemService();
+    this.menuItemRepository= new MenuItemRepository();
+  }
 
   public async fetchRecommendations(ws: WebSocket) {
     try {

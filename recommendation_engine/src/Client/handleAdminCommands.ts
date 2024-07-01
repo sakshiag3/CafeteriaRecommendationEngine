@@ -3,7 +3,7 @@ import { User } from '../entity/User';
 import { UserService } from '../services/userService';
 import { MenuItemService } from '../services/menuItemService';
 import { AdminService } from '../services/adminService';
-import { handleLogout } from './logoutHandler';
+import { handleLogout } from '../handlers/logoutHandler';
 import { MenuItemController } from '../controllers/menuItemController';
 
 export async function handleAdminCommands(

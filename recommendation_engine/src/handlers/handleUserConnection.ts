@@ -1,11 +1,9 @@
 import { WebSocket } from 'ws';
 import { handleUserInputs } from './handleUserInputs';
 import { handleMenuItemInputs } from './handleMenuItemInputs';
-import { handleRoleBasedCommand } from './handleRoleBasedCommand';
+import { handleRoleBasedCommand } from '../Client/handleRoleBasedCommand';
 import { handleChefInputs } from './handleChefInputs';
-import { showRoleBasedOptions } from './showRoleBasedOptions';
-import bcrypt from 'bcrypt';
-import { handleAdminCommands } from './handleAdminCommands';
+import { showRoleBasedOptions } from '../Client/showRoleBasedOptions';
 
 export async function handleUserConnection(
   ws: WebSocket,
@@ -28,39 +26,24 @@ export async function handleUserConnection(
     console.log(`Received message: ${msg}`);
 
     if (currentState === 'username') {
-      const { exists } = await controllers.userController.checkUsername(msg);
-      if (exists) {
-        currentUser = await controllers.userController.findByUsername(msg);
-        ws.send('Please enter your password:');
+      currentUser = await controllers.userController.handleUsername(ws, msg);
+      if (currentUser) {
         currentState = 'password';
-      } else {
-        ws.send('Invalid username. Please try again:');
       }
     } else if (currentState === 'password') {
-      if (currentUser && currentUser.password) {
-        const isMatch = await bcrypt.compare(msg, currentUser.password);
-        if (isMatch) {
-          currentUser.lastLoginTime = new Date();
-          await controllers.userController.save(currentUser);
-
-          ws.send(`Welcome ${currentUser.username} to the application. Your role is ${currentUser.role.name}.`);
-          currentState = 'authenticated';
-          showRoleBasedOptions(ws, currentUser.role.name);
-
-          const notifications = await controllers.userController.getNotifications(currentUser);
-          if (notifications.length > 0) {
-            notifications.forEach((notification: any) => {
-              ws.send(`Notification: ${notification.content}`);
-            });
-          } else {
-            ws.send('No new notifications.');
-          }
+      const authenticated = await controllers.userController.handlePassword(ws, msg, currentUser);
+      if (authenticated) {
+        currentState = 'authenticated';
+        showRoleBasedOptions(ws, currentUser.role.name);
+        const notifications = await controllers.userController.getNotifications(currentUser);
+        if (notifications.length > 0) {
+          notifications.forEach((notification: any) => {
+            ws.send(`Notification: ${notification.content}`);
+          });
         } else {
-          ws.send('Invalid password. Please try again:');
-          currentState = 'username';
+          ws.send('No new notifications.');
         }
       } else {
-        ws.send('Invalid password. Please try again:');
         currentState = 'username';
       }
     } else if (currentState === 'authenticated') {
@@ -102,7 +85,7 @@ export async function handleUserConnection(
       await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser') || currentState.startsWith('updateUser') || currentState.startsWith('deleteUser')) {
-      await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, currentStateSetter);
+      await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, services.userService, currentStateSetter);
     } else if (currentState.startsWith('addMenuItem') || currentState.startsWith('updateMenuItem') || currentState.startsWith('deleteMenuItem')) {
       await handleMenuItemInputs(ws, msg, currentState, services.userService, services.roleService, services.menuItemService, currentStateSetter);
     } else if (currentState === 'addRole') {
