@@ -34,7 +34,7 @@ export class EmployeeService {
     });
   }
 
-  public async checkMenuItemExists(menuItemId: number): Promise<boolean> {
+  public async checkMenuItemExists(menuItemId: number) {
     const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     return !!menuItem;
   }

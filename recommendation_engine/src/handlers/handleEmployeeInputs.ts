@@ -7,7 +7,7 @@ export async function handleEmployeeInputs(
   msg: string,
   currentState: string,
   employeeController: EmployeeController,
-  employeeService:EmployeeService,
+  employeeService: EmployeeService,
   currentStateSetter: (state: string) => void,
   userId: number
 ) {
@@ -52,14 +52,11 @@ async function handleGiveFeedback(
     ws.send('Invalid input. Please ensure the menu item ID is a number, the rating is between 1 and 5, and the comment is provided.');
     return;
   }
-
-  const menuItemExists = await employeeService.checkMenuItemExists(menuItemId);
-  if (!menuItemExists) {
-    ws.send('Invalid menu item ID. Please ensure the menu item exists.');
-    return;
-  }
-
+  // const menuItemExists = await employeeService.checkMenuItemExists(menuItemId);
+  // if (!menuItemExists) {
+  //   ws.send('Invalid menu item ID. Please ensure the menu item exists.');
+  //   return;
+  // }
   await employeeController.giveFeedback(ws, userId, menuItemId, rating, comment);
-  ws.send('Your feedback has been submitted.');
   currentStateSetter('authenticated');
 }

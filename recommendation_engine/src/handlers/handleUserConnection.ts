@@ -3,6 +3,7 @@ import { handleUserInputs } from './handleUserInputs';
 import { handleMenuItemInputs } from './handleMenuItemInputs';
 import { handleRoleBasedCommand } from '../Client/handleRoleBasedCommand';
 import { handleChefInputs } from './handleChefInputs';
+import { handleEmployeeInputs } from './handleEmployeeInputs';
 import { showRoleBasedOptions } from '../Client/showRoleBasedOptions';
 
 export async function handleUserConnection(
@@ -64,6 +65,8 @@ export async function handleUserConnection(
       } else {
         ws.send('An error occurred. Please reconnect.');
       }
+    } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
+      await handleEmployeeInputs(ws,msg,currentState,controllers.employeeController,services.employeeService,currentStateSetter,currentUser.id);
     } else if (currentState === 'selectRecommendations') {
       await handleChefInputs(ws, msg, currentState, controllers.chefController, services.userService, services.roleService, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'selectItemToPrepare') {
@@ -72,15 +75,6 @@ export async function handleUserConnection(
       const selectedMealsIds = meals.map((meal, index) => ({ meal, id: selectedIds[index] }));
       await controllers.chefController.selectItemToPrepare(ws, selectedMealsIds);
       currentState = 'authenticated';
-    } else if (currentState === 'employeeCastVote') {
-      const [meal, menuItemId] = msg.split(',').map(part => part.trim());
-      await controllers.employeeController.castVote(ws, currentUser.id, parseInt(menuItemId, 10), meal);
-      currentState = 'authenticated';
-    } else if (currentState === 'employeeGiveFeedback') {
-      const [menuItemId, rating, ...commentParts] = msg.split(',');
-      const comment = commentParts.join(',').trim();
-      await controllers.employeeController.giveFeedback(ws, currentUser.id, parseInt(menuItemId, 10), parseInt(rating, 10), comment);
-      currentStateSetter('authenticated');
     } else if (currentState === 'changeAvailability') {
       await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
