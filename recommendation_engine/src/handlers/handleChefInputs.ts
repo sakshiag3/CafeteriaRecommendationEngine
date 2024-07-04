@@ -2,7 +2,6 @@ import { WebSocket } from 'ws';
 import { ChefController } from '../controllers/chefController';
 import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
-import { Util } from '../utils/Util';
 
 export async function handleChefInputs(
   ws: WebSocket,
@@ -77,8 +76,6 @@ async function handleSelectItemToPrepare(
   await chefController.selectItemToPrepare(ws, mealIds);
   currentStateSetter('authenticated');
 }
-
-
 
 async function notifyEmployees(userService: UserService, roleService: RoleService, ws: WebSocket) {
   const chefRole = await roleService.getRoleByName('Employee');

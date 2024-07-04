@@ -13,7 +13,6 @@ export async function handleUserConnection(
 ) {
   let currentUser: any | null = null;
   let currentState = 'username';
-  let currentCommand: string | null = null;
   let selectedIdsByMeal: { meal: string; ids: string[] }[] = [];
 
   const currentStateSetter = (state: string) => {
@@ -55,7 +54,7 @@ export async function handleUserConnection(
           msg,
           services.userService,
           services.menuItemService,
-          controllers.adminController,
+          services.adminService,
           controllers.chefController,
           controllers.employeeController,
           controllers.menuItemController,
@@ -66,19 +65,13 @@ export async function handleUserConnection(
         ws.send('An error occurred. Please reconnect.');
       }
     } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
-      await handleEmployeeInputs(ws,msg,currentState,controllers.employeeController,services.employeeService,currentStateSetter,currentUser.id);
-    } else if (currentState === 'selectRecommendations') {
+      await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, services.employeeService, currentStateSetter, currentUser.id);
+    } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare') || currentState.startsWith('viewVotes')) {
       await handleChefInputs(ws, msg, currentState, controllers.chefController, services.userService, services.roleService, currentStateSetter, selectedIdsByMeal);
-    } else if (currentState === 'selectItemToPrepare') {
-      const selectedIds = msg.split(',').map(id => parseInt(id.trim(), 10));
-      const meals = ['Breakfast', 'Lunch', 'Dinner'];
-      const selectedMealsIds = meals.map((meal, index) => ({ meal, id: selectedIds[index] }));
-      await controllers.chefController.selectItemToPrepare(ws, selectedMealsIds);
-      currentState = 'authenticated';
     } else if (currentState === 'changeAvailability') {
-      await controllers.adminController.changeAvailability(ws, msg);
+      await services.adminService.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
-    } else if (currentState.startsWith('addUser') || currentState.startsWith('updateUser') || currentState.startsWith('deleteUser')) {
+    } else if (currentState.startsWith('addUser')) {
       await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, services.userService, currentStateSetter);
     } else if (currentState.startsWith('addMenuItem') || currentState.startsWith('updateMenuItem') || currentState.startsWith('deleteMenuItem')) {
       await handleMenuItemInputs(ws, msg, currentState, services.userService, services.roleService, services.menuItemService, currentStateSetter);

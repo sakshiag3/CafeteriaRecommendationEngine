@@ -4,7 +4,7 @@ import { RoleService } from '../services/roleService';
 import { MenuItemService } from '../services/menuItemService';
 
 let updateMenuItemDetails: { id?: number; description?: string; price?: string; category?: string } = {};
-
+//states change 
 export async function handleMenuItemInputs(
   ws: WebSocket,
   msg: string,
