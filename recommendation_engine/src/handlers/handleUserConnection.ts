@@ -5,6 +5,7 @@ import { handleRoleBasedCommand } from '../Client/handleRoleBasedCommand';
 import { handleChefInputs } from './handleChefInputs';
 import { handleEmployeeInputs } from './handleEmployeeInputs';
 import { showRoleBasedOptions } from '../Client/showRoleBasedOptions';
+import { surveyHandler } from './surveyHandler';
 
 export async function handleUserConnection(
   ws: WebSocket,
@@ -14,9 +15,24 @@ export async function handleUserConnection(
   let currentUser: any | null = null;
   let currentState = 'username';
   let selectedIdsByMeal: { meal: string; ids: string[] }[] = [];
+  let currentSurveyMenuItemId = 0;
+  let currentSurveyResponses: string[] = [];
+  let currentQuestionIndex = 0;
 
   const currentStateSetter = (state: string) => {
     currentState = state;
+  };
+
+  const currentSurveyMenuItemIdSetter = (id: number) => {
+    currentSurveyMenuItemId = id;
+  };
+
+  const currentSurveyResponsesSetter = (responses: string[]) => {
+    currentSurveyResponses = responses;
+  };
+
+  const currentQuestionIndexSetter = (index: number) => {
+    currentQuestionIndex = index;
   };
 
   ws.send('Please enter your username:');
@@ -60,7 +76,7 @@ export async function handleUserConnection(
           controllers.menuItemController,
           currentStateSetter
         );
-        showRoleBasedOptions(ws, currentUser.role.name);
+        // showRoleBasedOptions(ws, currentUser.role.name);
       } else {
         ws.send('An error occurred. Please reconnect.');
       }
@@ -77,6 +93,21 @@ export async function handleUserConnection(
       await handleMenuItemInputs(ws, msg, currentState, services.userService, services.roleService, services.menuItemService, currentStateSetter);
     } else if (currentState === 'addRole') {
       await controllers.userController.handleAddRole({ name: msg });
+    } else if (currentState === 'employeeEnterMenuItemIdForSurvey' || currentState === 'employeeAnsweringSurvey') {
+      await surveyHandler(
+        ws,
+        msg,
+        controllers.employeeController,
+        currentUser.id,
+        currentState,
+        currentStateSetter,
+        currentSurveyMenuItemIdSetter,
+        currentSurveyResponsesSetter,
+        currentSurveyMenuItemId,
+        currentSurveyResponses,
+        currentQuestionIndexSetter,
+        currentQuestionIndex
+      );
     }
   });
 }

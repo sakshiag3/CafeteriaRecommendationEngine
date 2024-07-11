@@ -3,8 +3,8 @@ import { UserService } from '../services/userService';
 import { RoleService } from '../services/roleService';
 import { MenuItemService } from '../services/menuItemService';
 
-let updateMenuItemDetails: { id?: number; description?: string; price?: string; category?: string } = {};
-//states change 
+let updateMenuItemDetails: { id?: number; description?: string; price?: string; category?: string; availabilityStatus?: boolean; dietaryRestriction?: 'Vegetarian' | 'Non-Vegetarian' | 'Eggetarian'; spiceLevel?: 'High' | 'Medium' | 'Low'; regionalPreference?: 'North Indian' | 'South Indian' | 'Other'; isSweet?: boolean } = {};
+
 export async function handleMenuItemInputs(
   ws: WebSocket,
   msg: string,
@@ -37,10 +37,30 @@ async function handleAddMenuItemStates(
   currentStateSetter: (state: string) => void
 ) {
   if (state === 'addMenuItemDetails') {
-    const [name, description, price, category] = msg.split(',');
+    const [name, description, price, category, availabilityStatus, dietaryRestriction, spiceLevel, regionalPreference, isSweet] = msg.split(',');
 
-    if (!name || !description || !price || !category) {
-      ws.send('Error: Please provide all details in the format "name, description, price, category".');
+    if (!name || !description || !price || !category || availabilityStatus === undefined || !dietaryRestriction || !spiceLevel || !regionalPreference || isSweet === undefined) {
+      ws.send('Error: Please provide all details in the format "name, description, price, category, availabilityStatus, dietaryRestriction, spiceLevel, regionalPreference, isSweet".');
+      return;
+    }
+
+    // Validate dietaryRestriction, spiceLevel, and regionalPreference values
+    const validDietaryRestrictions = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian'];
+    const validSpiceLevels = ['High', 'Medium', 'Low'];
+    const validRegionalPreferences = ['North Indian', 'South Indian', 'Other'];
+
+    if (!validDietaryRestrictions.includes(dietaryRestriction)) {
+      ws.send(`Error: Invalid dietary restriction. Valid values are: ${validDietaryRestrictions.join(', ')}.`);
+      return;
+    }
+
+    if (!validSpiceLevels.includes(spiceLevel)) {
+      ws.send(`Error: Invalid spice level. Valid values are: ${validSpiceLevels.join(', ')}.`);
+      return;
+    }
+
+    if (!validRegionalPreferences.includes(regionalPreference)) {
+      ws.send(`Error: Invalid regional preference. Valid values are: ${validRegionalPreferences.join(', ')}.`);
       return;
     }
 
@@ -53,7 +73,17 @@ async function handleAddMenuItemStates(
         const categories = await menuItemService.getCategories();
         ws.send(`Error: Category ${category} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
       } else {
-        await menuItemService.addMenuItem(name, description, price, category);
+        await menuItemService.addMenuItem(
+          name,
+          description,
+          price,
+          category,
+          availabilityStatus.toLowerCase() === 'true',
+          dietaryRestriction as 'Vegetarian' | 'Non-Vegetarian' | 'Eggetarian',
+          spiceLevel as 'High' | 'Medium' | 'Low',
+          regionalPreference as 'North Indian' | 'South Indian' | 'Other',
+          isSweet.toLowerCase() === 'true'
+        );
         ws.send(`Menu item ${name} added successfully.`);
 
         const chefRole = await roleService.getRoleByName('Chef');
@@ -99,7 +129,7 @@ async function handleUpdateMenuItemStates(
   ws: WebSocket,
   msg: string,
   state: string,
-  menuItemService:MenuItemService,
+  menuItemService: MenuItemService,
   currentStateSetter: (state: string) => void
 ) {
   if (state === 'updateMenuItemStart') {
@@ -113,6 +143,16 @@ async function handleUpdateMenuItemStates(
     await handleUpdateMenuItemPriceState(ws, msg, menuItemService, currentStateSetter);
   } else if (state === 'updateMenuItemCategory') {
     await handleUpdateMenuItemCategoryState(ws, msg, menuItemService, currentStateSetter);
+  } else if (state === 'updateMenuItemAvailabilityStatus') {
+    await handleUpdateMenuItemAvailabilityStatusState(ws, msg, currentStateSetter);
+  } else if (state === 'updateMenuItemDietaryRestriction') {
+    await handleUpdateMenuItemDietaryRestrictionState(ws, msg, currentStateSetter);
+  } else if (state === 'updateMenuItemSpiceLevel') {
+    await handleUpdateMenuItemSpiceLevelState(ws, msg, currentStateSetter);
+  } else if (state === 'updateMenuItemRegionalPreference') {
+    await handleUpdateMenuItemRegionalPreferenceState(ws, msg, currentStateSetter);
+  } else if (state === 'updateMenuItemIsSweet') {
+    await handleUpdateMenuItemIsSweetState(ws, msg, menuItemService, currentStateSetter);
   }
 }
 
@@ -171,13 +211,60 @@ async function handleUpdateMenuItemCategoryState(
     ws.send(`Error: Category ${msg} does not exist. Available categories: ${categories.map(category => category.name).join(', ')}. Please enter a valid category:`);
   } else {
     updateMenuItemDetails.category = msg || undefined;
-    await menuItemService.updateMenuItem(updateMenuItemDetails.id!, {
-      description: updateMenuItemDetails.description,
-      price: updateMenuItemDetails.price,
-      category: updateMenuItemDetails.category
-    });
-    ws.send(`Menu item updated successfully.`);
-    updateMenuItemDetails = {};
-    currentStateSetter('authenticated');
+    ws.send(`Enter new availability status for the menu item (true or false, or press enter to skip):`);
+    currentStateSetter('updateMenuItemAvailabilityStatus');
   }
+}
+
+async function handleUpdateMenuItemAvailabilityStatusState(
+  ws: WebSocket,
+  msg: string,
+  currentStateSetter: (state: string) => void
+) {
+  updateMenuItemDetails.availabilityStatus = msg.toLowerCase() === 'true' || msg.toLowerCase() === 'false' ? msg.toLowerCase() === 'true' : undefined;
+  ws.send(`Enter new dietary restriction for the menu item (Vegetarian, Non-Vegetarian, Eggetarian, or press enter to skip):`);
+  currentStateSetter('updateMenuItemDietaryRestriction');
+}
+
+async function handleUpdateMenuItemDietaryRestrictionState(
+  ws: WebSocket,
+  msg: string,
+  currentStateSetter: (state: string) => void
+) {
+  updateMenuItemDetails.dietaryRestriction = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian'].includes(msg) ? msg as 'Vegetarian' | 'Non-Vegetarian' | 'Eggetarian' : undefined;
+  ws.send(`Enter new spice level for the menu item (High, Medium, Low, or press enter to skip):`);
+  currentStateSetter('updateMenuItemSpiceLevel');
+}
+
+async function handleUpdateMenuItemSpiceLevelState(
+  ws: WebSocket,
+  msg: string,
+  currentStateSetter: (state: string) => void
+) {
+  updateMenuItemDetails.spiceLevel = ['High', 'Medium', 'Low'].includes(msg) ? msg as 'High' | 'Medium' | 'Low' : undefined;
+  ws.send(`Enter new regional preference for the menu item (North Indian, South Indian, Other, or press enter to skip):`);
+  currentStateSetter('updateMenuItemRegionalPreference');
+}
+
+async function handleUpdateMenuItemRegionalPreferenceState(
+  ws: WebSocket,
+  msg: string,
+  currentStateSetter: (state: string) => void
+) {
+  updateMenuItemDetails.regionalPreference = ['North Indian', 'South Indian', 'Other'].includes(msg) ? msg as 'North Indian' | 'South Indian' | 'Other' : undefined;
+  ws.send(`Enter if the menu item is sweet (true or false, or press enter to skip):`);
+  currentStateSetter('updateMenuItemIsSweet');
+}
+
+async function handleUpdateMenuItemIsSweetState(
+  ws: WebSocket,
+  msg: string,
+  menuItemService: MenuItemService,
+  currentStateSetter: (state: string) => void
+) {
+  updateMenuItemDetails.isSweet = msg.toLowerCase() === 'true' || msg.toLowerCase() === 'false' ? msg.toLowerCase() === 'true' : undefined;
+  await menuItemService.updateMenuItem(updateMenuItemDetails.id!, updateMenuItemDetails);
+  ws.send(`Menu item updated successfully.`);
+  updateMenuItemDetails = {};
+  currentStateSetter('authenticated');
 }

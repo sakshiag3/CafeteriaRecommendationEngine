@@ -14,7 +14,7 @@ export async function handleEmployeeCommands(
 ) {
   switch (command) {
     case '1':
-      await employeeController.viewSelectedMenuItems(ws);
+      await employeeController.viewSelectedMenuItems(ws, user.id);
       break;
     case '2':
       ws.send('Employee: Cast Vote');
@@ -22,12 +22,26 @@ export async function handleEmployeeCommands(
       currentStateSetter('employeeCastVote');
       break;
     case '3':
-      await employeeController.viewPreparedMenuItems(ws);
+      await employeeController.viewPreparedMenuItems(ws,user.id);
       break;
     case '4':
       ws.send('Employee: Give Feedback');
       ws.send('Please enter your feedback in the format "menuItemId,rating,comment":');
       currentStateSetter('employeeGiveFeedback');
+      break;
+    case '5':
+      await employeeController.viewSurveys(ws, user.id);
+      currentStateSetter('employeeViewSurveys');
+      break;
+    case '6':
+      ws.send('Employee: Enter Menu Item ID');
+      ws.send('Please enter the menu item ID for the survey:');
+      currentStateSetter('employeeEnterMenuItemIdForSurvey');
+      break;
+    case '7':
+      ws.send('Employee: Update Your Profile');
+      await employeeController.updateProfile(ws, user.id);
+      currentStateSetter('authenticated');
       break;
     case 'logout':
       await handleLogout(ws, userService, user);
@@ -35,4 +49,5 @@ export async function handleEmployeeCommands(
     default:
       ws.send('Unknown command.');
   }
+  
 }

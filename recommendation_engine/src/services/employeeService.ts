@@ -4,10 +4,18 @@ import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { FinalSelection } from '../entity/FinalSelection';
 import { Vote } from '../entity/Vote';
 import { Feedback } from '../entity/Feedback';
+import { FeedbackForm } from '../entity/FeedbackForm';
 import { User } from '../entity/User';
 import SentimentAnalyzer from './sentimentAnalyzer';
 import { SentimentScore } from '../entity/SentimentScore';
 import { AppDataSource } from '../data-source';
+import { DiscardedMenuItemRepository } from '../repositories/discardedMenuItemRepository';
+import { QuestionRepository } from '../repositories/questionRepository';
+import { Question } from '../entity/Question';
+import { UserProfileQuestion } from '../entity/UserProfileQuestion';
+import { UserProfileResponse } from '../entity/UserProfileResponse';
+import { UserProfileQuestionRepository } from '../repositories/UserProfileQuestionRepository';
+import { UserProfileResponseRepository } from '../repositories/UserProfileResponseRepository';
 
 export class EmployeeService {
   private sentimentAnalyzer: SentimentAnalyzer;
@@ -15,16 +23,27 @@ export class EmployeeService {
   private finalSelectionRepository: Repository<FinalSelection>;
   private voteRepository: Repository<Vote>;
   private feedbackRepository: Repository<Feedback>;
+  private feedbackFormRepository: Repository<FeedbackForm>;
   private sentimentScoreRepository: Repository<SentimentScore>;
   private menuItemRepository: Repository<MenuItem>;
+  private discardedMenuItemRepository: DiscardedMenuItemRepository;
+  private questionRepository: QuestionRepository;
+  private userProfileQuestionRepository: UserProfileQuestionRepository;
+  private userProfileResponseRepository: UserProfileResponseRepository;
+
   constructor() {
     this.feedbackRepository = AppDataSource.getRepository(Feedback);
+    this.feedbackFormRepository = AppDataSource.getRepository(FeedbackForm);
     this.sentimentScoreRepository = AppDataSource.getRepository(SentimentScore);
     this.menuItemRepository = AppDataSource.getRepository(MenuItem);
     this.selectedRecommendationRepository = AppDataSource.getRepository(SelectedRecommendation);
     this.voteRepository = AppDataSource.getRepository(Vote);
     this.finalSelectionRepository = AppDataSource.getRepository(FinalSelection);
     this.sentimentAnalyzer = new SentimentAnalyzer();
+    this.discardedMenuItemRepository = new DiscardedMenuItemRepository();
+    this.questionRepository = new QuestionRepository();
+    this.userProfileQuestionRepository = new UserProfileQuestionRepository();
+    this.userProfileResponseRepository = new UserProfileResponseRepository();
   }
 
   public async getSelectedMenuItems(start: Date, end: Date) {
@@ -38,7 +57,7 @@ export class EmployeeService {
     const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
     return !!menuItem;
   }
-  
+
   public async getPreparedMenuItems(start: Date, end: Date) {
     return this.finalSelectionRepository.find({
       where: { date: Between(start, end) },
@@ -95,6 +114,57 @@ export class EmployeeService {
     return 'Your Feedback has been recorded';
   }
 
+  public async getSurveys(userId: number) {
+    const discardedItems = await this.discardedMenuItemRepository.findAll();
+
+    const feedbackForms = await this.feedbackFormRepository.find({
+      where: { user: { id: userId } },
+      relations: ['discardedMenuItem']
+    });
+
+    const completedSurveyIds = feedbackForms.map(form => form.discardedMenuItem.id);
+    const surveys = discardedItems.filter(item => !completedSurveyIds.includes(item.id));
+
+    return surveys;
+  }
+
+  public formatSurveysToTable(surveys: any[]) {
+    let table = 'Surveys:\n';
+    table += '+----+-----------------+--------------------+-------+\n';
+    table += '| ID | Name            | Description        | Price |\n';
+    table += '+----+-----------------+--------------------+-------+\n';
+    surveys.forEach((item) => {
+      table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${String(item.menuItem.price).padEnd(5)} |\n`;
+    });
+    table += '+----+-----------------+--------------------+-------+\n';
+    return table;
+  }
+
+  public async getSurveyQuestions(): Promise<Question[]> {
+    return this.questionRepository.findAllQuestions();
+  }
+
+  public async submitSurvey(userId: number, menuItemId: number, responses: string[]) {
+    const discardedItem = await this.discardedMenuItemRepository.findByMenuItemId(menuItemId);
+
+    if (!discardedItem) {
+      return 'No feedback form available for this item.';
+    }
+
+    const questions = await this.getSurveyQuestions();
+
+    for (let i = 0; i < questions.length; i++) {
+      const feedbackForm = new FeedbackForm();
+      feedbackForm.user = { id: userId } as User;
+      feedbackForm.discardedMenuItem = discardedItem;
+      feedbackForm.question = { id: questions[i].id } as Question;
+      feedbackForm.response = responses[i];
+      await this.feedbackFormRepository.save(feedbackForm);
+    }
+
+    return 'Thank you for your feedback!';
+  }
+
   public formatSelectedRecommendationsToTables(recommendations: SelectedRecommendation[]) {
     const breakfastItems = recommendations.filter(r => r.meal === 'Breakfast');
     const lunchItems = recommendations.filter(r => r.meal === 'Lunch');
@@ -121,17 +191,17 @@ export class EmployeeService {
   }
 
   public formatFinalSelectionsToTables(finalSelections: FinalSelection[]) {
-    const breakfastItems = finalSelections.filter(r => r.meal === 'Breakfast');
-    const lunchItems = finalSelections.filter(r => r.meal === 'Lunch');
-    const dinnerItems = finalSelections.filter(r => r.meal === 'Dinner');
+    const breakfastItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Breakfast');
+    const lunchItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Lunch');
+    const dinnerItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Dinner');
 
     const formatTable = (title: string, items: FinalSelection[]) => {
       let table = `${title}:\n`;
       table += '+----+-----------------+--------------------+-------+-------+\n';
-      table += '| ID | MenuItem ID | Name            | Description        | Price |\n';
+      table += '| ID | Name            | Description        | Price |\n';
       table += '+----+-----------------+--------------------+-------+-------+\n';
       items.forEach((item) => {
-        table += `| ${String(item.id).padEnd(2)} | ${String(item.selectedRecommendation.menuItem.id).padEnd(10)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${String(item.selectedRecommendation.menuItem.price).padEnd(5)} |\n`;
+        table += `| ${String(item.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${String(item.selectedRecommendation.menuItem.price).padEnd(5)} |\n`;
       });
       table += '+----+-----------------+--------------------+-------+-------+\n';
       return table;
@@ -142,5 +212,51 @@ export class EmployeeService {
     const dinnerTable = formatTable('Dinner', dinnerItems);
 
     return `${breakfastTable}\n${lunchTable}\n${dinnerTable}`;
+  }
+
+  public async getProfileQuestions(): Promise<UserProfileQuestion[]> {
+    return this.userProfileQuestionRepository.findAllQuestions();
+  }
+
+  public async getProfileResponses(userId: number): Promise<UserProfileResponse[]> {
+    return this.userProfileResponseRepository.findResponsesByUser(userId);
+  }
+
+  public async saveProfileResponses(userId: number, responses: { questionId: number; response: string }[]) {
+    for (const res of responses) {
+      const response = new UserProfileResponse();
+      response.user = { id: userId } as User;
+      response.question = { id: res.questionId } as UserProfileQuestion;
+      response.response = res.response;
+      await this.userProfileResponseRepository.saveResponse(response);
+    }
+  }
+
+  public async recommendMenuItems(userId: number, menuItems: MenuItem[]): Promise<MenuItem[]> {
+    const responses = await this.getProfileResponses(userId);
+    const preferences: { [key: string]: string } = {};
+
+    responses.forEach(res => {
+      preferences[res.question.questionText] = res.response;
+    });
+
+    return menuItems.sort((a, b) => {
+      let scoreA = 0;
+      let scoreB = 0;
+
+      if (preferences['Please select one-'] === 'Vegetarian' && a.dietaryRestriction === 'Vegetarian') scoreA++;
+      if (preferences['Please select one-'] === 'Vegetarian' && b.dietaryRestriction === 'Vegetarian') scoreB++;
+
+      if (preferences['Please select your spice level'] === a.spiceLevel) scoreA++;
+      if (preferences['Please select your spice level'] === b.spiceLevel) scoreB++;
+
+      if (preferences['What do you prefer most?'] === a.regionalPreference) scoreA++;
+      if (preferences['What do you prefer most?'] === b.regionalPreference) scoreB++;
+
+      if (preferences['Do you have a sweet tooth?'] === 'Yes' && a.isSweet) scoreA++;
+      if (preferences['Do you have a sweet tooth?'] === 'Yes' && b.isSweet) scoreB++;
+
+      return scoreB - scoreA;
+    });
   }
 }

@@ -22,7 +22,7 @@ export async function handleAdminCommands(
       break;
     case '2':
       ws.send('Admin: Add Menu Item');
-      ws.send('Please enter the new menu item details in the format "name,description,price,category":');
+      ws.send('Please provide all details in the format "name, description, price, category, availabilityStatus, dietaryRestriction, spiceLevel, regionalPreference, isSweet:');
       currentStateSetter('addMenuItemDetails');
       break;
     case '3':

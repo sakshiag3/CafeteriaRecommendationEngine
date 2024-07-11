@@ -1,14 +1,21 @@
 import { WebSocket } from 'ws';
 import { MenuItemRepository } from '../repositories/menuItemRepository';
-import { Util } from '../utils/Util';
+import { DiscardedMenuItemRepository } from '../repositories/discardedMenuItemRepository';
+import { QuestionRepository } from '../repositories/questionRepository';
 import { RecommendationService } from './recommendationService';
+import { MenuItem } from '../entity/MenuItem';
+import { Util } from '../utils/Util';
 
 export class AdminService {
   private menuItemRepository: MenuItemRepository;
-
+  private discardedMenuItemRepository: DiscardedMenuItemRepository;
+  private questionRepository: QuestionRepository;
   private recommendationService: RecommendationService;
+
   constructor() {
     this.menuItemRepository = new MenuItemRepository();
+    this.discardedMenuItemRepository = new DiscardedMenuItemRepository();
+    this.questionRepository = new QuestionRepository();
     this.recommendationService = new RecommendationService();
   }
 
@@ -40,29 +47,47 @@ export class AdminService {
     return discardList;
   }
 
-
   async changeAvailability(ws: WebSocket, msg: string) {
     try {
-        const [itemId, availability] = msg.split(',').map(part => part.trim());
-        console.log('Parsed itemId:', itemId, 'availability:', availability);
+      const [itemId, availability] = msg.split(',').map(part => part.trim());
+      const menuItem = await this.menuItemRepository.findById(parseInt(itemId));
+      if (menuItem) {
+        const availabilityStatus = availability.toLowerCase() === 'true';
+        menuItem.availabilityStatus = availabilityStatus;
+        await this.menuItemRepository.save(menuItem);
+        ws.send(`Menu item ${menuItem.name} availability changed to ${availabilityStatus}.`);
 
-        const menuItem = await this.menuItemRepository.findById(parseInt(itemId));
-        if (menuItem) {
-            const availabilityStatus = availability.toLowerCase() === 'true';
-            console.log('Setting availability to:', availabilityStatus); 
-            menuItem.availabilityStatus = availabilityStatus;
-            await this.menuItemRepository.save(menuItem);
-            console.log('Menu item saved:', menuItem);
-            ws.send(`Menu item ${menuItem.name} availability changed to ${availabilityStatus}.`);
-        } else {
-            ws.send('Menu item not found.');
+        if (!availabilityStatus) {
+          await this.initiateFeedbackForDiscardedItem(menuItem);
         }
+      } else {
+        ws.send('Menu item not found.');
+      }
     } catch (error) {
-        console.error('Error changing availability:', error);
-        const errorMessage = (error as Error).message || 'An unknown error occurred';
-        ws.send(`Error changing availability: ${errorMessage}. Please try again later.`);
+      console.error('Error changing availability:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      ws.send(`Error changing availability: ${errorMessage}. Please try again later.`);
     }
-}
+  }
 
+  private async initiateFeedbackForDiscardedItem(menuItem: MenuItem) {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 7);
 
+    const discardedItem = await this.discardedMenuItemRepository.saveDiscardedItem({
+      menuItem: menuItem,
+      expiresAt: expirationDate,
+      createdAt: new Date()
+    });
+
+    const questions = [
+      'What didn’t you like about ' + menuItem.name + '?',
+      'How would you like ' + menuItem.name + ' to taste?',
+      'Share your mom’s recipe.',
+    ];
+
+    for (const questionText of questions) {
+      await this.questionRepository.saveQuestion({ questionText });
+    }
+  }
 }

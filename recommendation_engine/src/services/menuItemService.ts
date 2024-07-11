@@ -5,10 +5,10 @@ export class MenuItemService {
 
   private menuItemRepository: MenuItemRepository;
   constructor() { 
-    this.menuItemRepository=  new MenuItemRepository()
+    this.menuItemRepository = new MenuItemRepository();
   }
 
-  async addMenuItem(name: string, description: string, price: string, category: string, availabilityStatus = true) {
+  async addMenuItem(name: string, description: string, price: string, category: string, availabilityStatus: boolean = true, dietaryRestriction: 'Vegetarian' | 'Non-Vegetarian' | 'Eggetarian', spiceLevel: 'High' | 'Medium' | 'Low', regionalPreference: 'North Indian' | 'South Indian' | 'Other', isSweet: boolean = false) {
     const categoryEntity = await this.menuItemRepository.findCategoryByName(category);
     if (!categoryEntity) throw new Error('Category not found');
 
@@ -17,11 +17,15 @@ export class MenuItemService {
       description,
       price: parseFloat(price),
       category: categoryEntity,
-      availabilityStatus
+      availabilityStatus,
+      dietaryRestriction,
+      spiceLevel,
+      regionalPreference,
+      isSweet
     });
   }
 
-  async updateMenuItem(id: number, updates: { description?: string; price?: string; category?: string; availabilityStatus?: boolean }) {
+  async updateMenuItem(id: number, updates: { description?: string; price?: string; category?: string; availabilityStatus?: boolean; dietaryRestriction?: 'Vegetarian' | 'Non-Vegetarian' | 'Eggetarian'; spiceLevel?: 'High' | 'Medium' | 'Low'; regionalPreference?: 'North Indian' | 'South Indian' | 'Other'; isSweet?: boolean }) {
     const existingMenuItem = await this.menuItemRepository.findById(id);
     if (!existingMenuItem) throw new Error('MenuItem not found');
 
@@ -40,6 +44,18 @@ export class MenuItemService {
     }
     if (updates.availabilityStatus !== undefined) {
       updateData.availabilityStatus = updates.availabilityStatus;
+    }
+    if (updates.dietaryRestriction !== undefined) {
+      updateData.dietaryRestriction = updates.dietaryRestriction;
+    }
+    if (updates.spiceLevel !== undefined) {
+      updateData.spiceLevel = updates.spiceLevel;
+    }
+    if (updates.regionalPreference !== undefined) {
+      updateData.regionalPreference = updates.regionalPreference;
+    }
+    if (updates.isSweet !== undefined) {
+      updateData.isSweet = updates.isSweet;
     }
 
     await this.menuItemRepository.update(id, updateData);
