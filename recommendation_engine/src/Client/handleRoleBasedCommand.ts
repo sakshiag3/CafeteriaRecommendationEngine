@@ -1,7 +1,6 @@
 import { WebSocket } from 'ws';
 import { User } from '../entity/User';
 import { UserService } from '../services/userService';
-import { MenuItemService } from '../services/menuItemService';
 import { ChefController } from '../controllers/chefController';
 import { EmployeeController } from '../controllers/employeeController';
 import { AdminService } from '../services/adminService';
@@ -15,7 +14,6 @@ export async function handleRoleBasedCommand(
   user: User,
   command: string,
   userService: UserService,
-  menuItemService: MenuItemService,
   adminService: AdminService,
   chefController: ChefController,
   employeeController: EmployeeController,
@@ -27,7 +25,7 @@ export async function handleRoleBasedCommand(
       await handleAdminCommands(ws, command, currentStateSetter, userService, user, menuItemController, adminService);
       break;
     case 'Chef':
-      await handleChefCommands(ws, command, chefController, menuItemService, userService, user, menuItemController, currentStateSetter);
+      await handleChefCommands(ws, command, chefController, userService, user, menuItemController, currentStateSetter);
       break;
     case 'Employee':
       await handleEmployeeCommands(ws, command, employeeController, userService, user, currentStateSetter);

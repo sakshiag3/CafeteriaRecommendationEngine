@@ -1,7 +1,6 @@
 import { WebSocket } from 'ws';
 import { User } from '../entity/User';
 import { UserService } from '../services/userService';
-import { MenuItemService } from '../services/menuItemService';
 import { handleLogout } from '../handlers/logoutHandler';
 import { ChefController } from '../controllers/chefController';
 import { MenuItemController } from '../controllers/menuItemController';
@@ -10,7 +9,6 @@ export async function handleChefCommands(
   ws: WebSocket,
   command: string,
   chefController: ChefController,
-  menuItemService: MenuItemService,
   userService: UserService,
   user: User,
   menuItemController: MenuItemController,

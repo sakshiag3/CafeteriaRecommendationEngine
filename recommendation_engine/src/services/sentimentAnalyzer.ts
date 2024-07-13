@@ -1,6 +1,6 @@
 import { pipeline } from "transformer.ts";
 
-class SentimentAnalyzer {
+export class SentimentAnalyzer {
   private classifier: any;
 
   constructor() {
@@ -23,4 +23,3 @@ class SentimentAnalyzer {
   }
 }
 
-export default SentimentAnalyzer;

@@ -1,75 +1,41 @@
-import { Repository, Between } from 'typeorm';
-import { MenuItem } from '../entity/MenuItem';
+import { EmployeeRepository } from '../repositories/employeeRepository';
+import { SentimentAnalyzer } from './sentimentAnalyzer';
+import { User } from '../entity/User';
+import { Feedback } from '../entity/Feedback';
+import { Vote } from '../entity/Vote';
+import { FeedbackForm } from '../entity/FeedbackForm';
+import { UserProfileResponse } from '../entity/UserProfileResponse';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { FinalSelection } from '../entity/FinalSelection';
-import { Vote } from '../entity/Vote';
-import { Feedback } from '../entity/Feedback';
-import { FeedbackForm } from '../entity/FeedbackForm';
-import { User } from '../entity/User';
-import SentimentAnalyzer from './sentimentAnalyzer';
+import { MenuItem } from '../entity/MenuItem';
 import { SentimentScore } from '../entity/SentimentScore';
-import { AppDataSource } from '../data-source';
-import { DiscardedMenuItemRepository } from '../repositories/discardedMenuItemRepository';
-import { QuestionRepository } from '../repositories/questionRepository';
 import { Question } from '../entity/Question';
 import { UserProfileQuestion } from '../entity/UserProfileQuestion';
-import { UserProfileResponse } from '../entity/UserProfileResponse';
-import { UserProfileQuestionRepository } from '../repositories/UserProfileQuestionRepository';
-import { UserProfileResponseRepository } from '../repositories/UserProfileResponseRepository';
 
 export class EmployeeService {
   private sentimentAnalyzer: SentimentAnalyzer;
-  private selectedRecommendationRepository: Repository<SelectedRecommendation>;
-  private finalSelectionRepository: Repository<FinalSelection>;
-  private voteRepository: Repository<Vote>;
-  private feedbackRepository: Repository<Feedback>;
-  private feedbackFormRepository: Repository<FeedbackForm>;
-  private sentimentScoreRepository: Repository<SentimentScore>;
-  private menuItemRepository: Repository<MenuItem>;
-  private discardedMenuItemRepository: DiscardedMenuItemRepository;
-  private questionRepository: QuestionRepository;
-  private userProfileQuestionRepository: UserProfileQuestionRepository;
-  private userProfileResponseRepository: UserProfileResponseRepository;
+  private employeeRepository: EmployeeRepository;
 
   constructor() {
-    this.feedbackRepository = AppDataSource.getRepository(Feedback);
-    this.feedbackFormRepository = AppDataSource.getRepository(FeedbackForm);
-    this.sentimentScoreRepository = AppDataSource.getRepository(SentimentScore);
-    this.menuItemRepository = AppDataSource.getRepository(MenuItem);
-    this.selectedRecommendationRepository = AppDataSource.getRepository(SelectedRecommendation);
-    this.voteRepository = AppDataSource.getRepository(Vote);
-    this.finalSelectionRepository = AppDataSource.getRepository(FinalSelection);
     this.sentimentAnalyzer = new SentimentAnalyzer();
-    this.discardedMenuItemRepository = new DiscardedMenuItemRepository();
-    this.questionRepository = new QuestionRepository();
-    this.userProfileQuestionRepository = new UserProfileQuestionRepository();
-    this.userProfileResponseRepository = new UserProfileResponseRepository();
+    this.employeeRepository = new EmployeeRepository();
   }
 
   public async getSelectedMenuItems(start: Date, end: Date) {
-    return this.selectedRecommendationRepository.find({
-      where: { date: Between(start, end) },
-      relations: ['menuItem'],
-    });
+    return this.employeeRepository.findSelectedRecommendations(start, end);
   }
 
   public async checkMenuItemExists(menuItemId: number) {
-    const menuItem = await this.menuItemRepository.findOne({ where: { id: menuItemId } });
+    const menuItem = await this.employeeRepository.findMenuItem(menuItemId);
     return !!menuItem;
   }
 
   public async getPreparedMenuItems(start: Date, end: Date) {
-    return this.finalSelectionRepository.find({
-      where: { date: Between(start, end) },
-      relations: ['selectedRecommendation', 'selectedRecommendation.menuItem'],
-    });
+    return this.employeeRepository.findFinalSelections(start, end);
   }
 
   public async castVote(userId: number, selectedRecommendationId: number, meal: string, start: Date, end: Date) {
-    const existingVote = await this.voteRepository.findOne({
-      where: { user: { id: userId }, selectedRecommendation: { meal: meal }, date: Between(start, end) },
-      relations: ['selectedRecommendation'],
-    });
+    const existingVote = await this.employeeRepository.findVote(userId, meal, start, end);
 
     if (existingVote) {
       return `You have already voted for ${meal} today.`;
@@ -79,7 +45,7 @@ export class EmployeeService {
     vote.user = { id: userId } as User;
     vote.selectedRecommendation = { id: selectedRecommendationId } as SelectedRecommendation;
     vote.date = new Date();
-    await this.voteRepository.save(vote);
+    await this.employeeRepository.saveVote(vote);
     return `Your vote for ${meal} has been cast.`;
   }
 
@@ -94,33 +60,28 @@ export class EmployeeService {
     feedback.rating = rating;
     feedback.comment = comment;
     feedback.date = new Date();
-    await this.feedbackRepository.save(feedback);
+    await this.employeeRepository.saveFeedback(feedback);
 
     const sentimentScore = await this.sentimentAnalyzer.analyzeSentiment(comment);
-    const existingSentiment = await this.sentimentScoreRepository.findOne({
-      where: { menuItem: { id: menuItemId } }
-    });
+    const existingSentiment = await this.employeeRepository.findSentimentScore(menuItemId);
 
     if (existingSentiment) {
       existingSentiment.score = (existingSentiment.score + sentimentScore) / 2;
-      await this.sentimentScoreRepository.save(existingSentiment);
+      await this.employeeRepository.saveSentimentScore(existingSentiment);
     } else {
       const sentiment = new SentimentScore();
       sentiment.menuItem = { id: menuItemId } as MenuItem;
       sentiment.score = sentimentScore;
       sentiment.date = new Date();
-      await this.sentimentScoreRepository.save(sentiment);
+      await this.employeeRepository.saveSentimentScore(sentiment);
     }
     return 'Your Feedback has been recorded';
   }
 
   public async getSurveys(userId: number) {
-    const discardedItems = await this.discardedMenuItemRepository.findAll();
+    const discardedItems = await this.employeeRepository.findAllDiscardedMenuItems();
 
-    const feedbackForms = await this.feedbackFormRepository.find({
-      where: { user: { id: userId } },
-      relations: ['discardedMenuItem']
-    });
+    const feedbackForms = await this.employeeRepository.findFeedbackForms(userId);
 
     const completedSurveyIds = feedbackForms.map(form => form.discardedMenuItem.id);
     const surveys = discardedItems.filter(item => !completedSurveyIds.includes(item.id));
@@ -134,18 +95,18 @@ export class EmployeeService {
     table += '| ID | Name            | Description        | Price |\n';
     table += '+----+-----------------+--------------------+-------+\n';
     surveys.forEach((item) => {
-      table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${String(item.menuItem.price).padEnd(5)} |\n`;
+      table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.toFixed(2).padEnd(5)} |\n`;
     });
     table += '+----+-----------------+--------------------+-------+\n';
     return table;
   }
 
-  public async getSurveyQuestions(): Promise<Question[]> {
-    return this.questionRepository.findAllQuestions();
+  public async getSurveyQuestions() {
+    return this.employeeRepository.findAllQuestions();
   }
 
   public async submitSurvey(userId: number, menuItemId: number, responses: string[]) {
-    const discardedItem = await this.discardedMenuItemRepository.findByMenuItemId(menuItemId);
+    const discardedItem = await this.employeeRepository.findAllDiscardedMenuItems().then(items => items.find(item => item.menuItem.id === menuItemId));
 
     if (!discardedItem) {
       return 'No feedback form available for this item.';
@@ -159,7 +120,7 @@ export class EmployeeService {
       feedbackForm.discardedMenuItem = discardedItem;
       feedbackForm.question = { id: questions[i].id } as Question;
       feedbackForm.response = responses[i];
-      await this.feedbackFormRepository.save(feedbackForm);
+      await this.employeeRepository.saveFeedbackForm(feedbackForm);
     }
 
     return 'Thank you for your feedback!';
@@ -177,7 +138,7 @@ export class EmployeeService {
       table += '+----+-----------------+--------------------+-------+------------+\n';
       items.forEach((item) => {
         const availabilityStatus = item.menuItem.availabilityStatus ? 'Yes' : 'No';
-        table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${String(item.menuItem.price).padEnd(5)} | ${availabilityStatus.padEnd(10)} |\n`;
+        table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.toFixed(2).padEnd(5)} | ${availabilityStatus.padEnd(10)} |\n`;
       });
       table += '+----+-----------------+--------------------+-------+------------+\n';
       return table;
@@ -197,13 +158,13 @@ export class EmployeeService {
 
     const formatTable = (title: string, items: FinalSelection[]) => {
       let table = `${title}:\n`;
-      table += '+----+-----------------+--------------------+-------+-------+\n';
+      table += '+----+-----------------+--------------------+-------+\n';
       table += '| ID | Name            | Description        | Price |\n';
-      table += '+----+-----------------+--------------------+-------+-------+\n';
+      table += '+----+-----------------+--------------------+-------+\n';
       items.forEach((item) => {
-        table += `| ${String(item.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${String(item.selectedRecommendation.menuItem.price).padEnd(5)} |\n`;
+        table += `| ${String(item.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${item.selectedRecommendation.menuItem.price.toFixed(2).padEnd(5)} |\n`;
       });
-      table += '+----+-----------------+--------------------+-------+-------+\n';
+      table += '+----+-----------------+--------------------+-------+\n';
       return table;
     };
 
@@ -214,12 +175,12 @@ export class EmployeeService {
     return `${breakfastTable}\n${lunchTable}\n${dinnerTable}`;
   }
 
-  public async getProfileQuestions(): Promise<UserProfileQuestion[]> {
-    return this.userProfileQuestionRepository.findAllQuestions();
+  public async getProfileQuestions() {
+    return this.employeeRepository.findAllProfileQuestions();
   }
 
-  public async getProfileResponses(userId: number): Promise<UserProfileResponse[]> {
-    return this.userProfileResponseRepository.findResponsesByUser(userId);
+  public async getProfileResponses(userId: number) {
+    return this.employeeRepository.findProfileResponsesByUser(userId);
   }
 
   public async saveProfileResponses(userId: number, responses: { questionId: number; response: string }[]) {
@@ -228,11 +189,11 @@ export class EmployeeService {
       response.user = { id: userId } as User;
       response.question = { id: res.questionId } as UserProfileQuestion;
       response.response = res.response;
-      await this.userProfileResponseRepository.saveResponse(response);
+      await this.employeeRepository.saveProfileResponse(response);
     }
   }
 
-  public async recommendMenuItems(userId: number, menuItems: MenuItem[]): Promise<MenuItem[]> {
+  public async recommendMenuItems(userId: number, menuItems: MenuItem[]) {
     const responses = await this.getProfileResponses(userId);
     const preferences: { [key: string]: string } = {};
 

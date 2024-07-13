@@ -69,7 +69,6 @@ export async function handleUserConnection(
           currentUser,
           msg,
           services.userService,
-          services.menuItemService,
           services.adminService,
           controllers.chefController,
           controllers.employeeController,
