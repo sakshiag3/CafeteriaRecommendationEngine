@@ -13,9 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
     "mysql2": "^3.10.0",
     "node-cron": "^3.0.3",
     "sentiment": "^5.0.2",
+    "transformer.ts": "^1.0.1",
     "typeorm": "^0.3.20",
     "ws": "^8.17.0"
   },

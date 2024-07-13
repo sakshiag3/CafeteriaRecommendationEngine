@@ -1,10 +1,14 @@
 import WebSocket from 'ws';
 import readline from 'readline';
+import * as dotenv from 'dotenv';
 
-const ws = new WebSocket('ws://localhost:8080');
+dotenv.config();
+
+const wsUrl = process.env.WS_URL || 'ws://localhost:8080';
+const ws = new WebSocket(wsUrl);
 
 ws.on('open', () => {
-  console.log('Connected to the server');
+  console.log('Welcome to the cafeteria');
 
   const rl = readline.createInterface({
     input: process.stdin,

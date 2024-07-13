@@ -16,7 +16,6 @@ export class EmployeeController {
       const menuItems = selectedRecommendations.map(r => r.menuItem);
       const userPreferences = await this.employeeService.recommendMenuItems(userId, menuItems);
       
-      // Reconstruct SelectedRecommendation objects with sorted menu items
       const sortedRecommendations = userPreferences.map(menuItem => selectedRecommendations.find(r => r.menuItem.id === menuItem.id)!);
 
       const formattedTables = this.employeeService.formatSelectedRecommendationsToTables(sortedRecommendations);
@@ -34,7 +33,6 @@ export class EmployeeController {
       const menuItems = finalSelections.map(f => f.selectedRecommendation.menuItem);
       const userPreferences = await this.employeeService.recommendMenuItems(userId, menuItems);
       
-      // Reconstruct FinalSelection objects with sorted menu items
       const sortedSelections = userPreferences.map(menuItem => finalSelections.find(f => f.selectedRecommendation.menuItem.id === menuItem.id)!);
 
       const formattedTables = this.employeeService.formatFinalSelectionsToTables(sortedSelections);
