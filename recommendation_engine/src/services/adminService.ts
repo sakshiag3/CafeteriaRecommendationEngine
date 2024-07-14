@@ -1,10 +1,8 @@
-import { WebSocket } from 'ws';
 import { MenuItemRepository } from '../repositories/menuItemRepository';
 import { DiscardedMenuItemRepository } from '../repositories/discardedMenuItemRepository';
 import { QuestionRepository } from '../repositories/questionRepository';
 import { RecommendationService } from './recommendationService';
 import { MenuItem } from '../entity/MenuItem';
-import { Util } from '../utils/Util';
 
 export class AdminService {
   private menuItemRepository: MenuItemRepository;
@@ -19,27 +17,15 @@ export class AdminService {
     this.recommendationService = new RecommendationService();
   }
 
-  async viewDiscardList(ws: WebSocket) {
-    try {
-      const discardList = await this.getDiscardList();
-      const formattedList = Util.formatDiscardListToTable(discardList);
-      ws.send(`Discard Menu Item List:\n\n${formattedList}`);
-    } catch (error) {
-      console.error('Error viewing discard list:', error);
-      const errorMessage = (error as Error).message || 'An unknown error occurred';
-      ws.send(`Error viewing discard list: ${errorMessage}. Please try again later.`);
-    }
-  }
-
-  async getDiscardList() {
-    const menuItems = await this.menuItemRepository.findMenuItems(); 
+  public async getDiscardList() {
+    const menuItems = await this.menuItemRepository.findMenuItems();
     const discardList = [];
 
     for (const item of menuItems) {
-      if (!item.id) continue; 
+      if (!item.id) continue;
       const avgRating = await this.recommendationService.getAverageRating(item.id);
       const sentimentScore = await this.recommendationService.getSentimentScore(item.id);
-      if (avgRating > 0 && avgRating < 2 && sentimentScore > 0 && sentimentScore < 25){ 
+      if (avgRating > 0 && avgRating < 2 && sentimentScore > 0 && sentimentScore < 25) {
         discardList.push({ item, avgRating, sentimentScore });
       }
     }
@@ -47,26 +33,18 @@ export class AdminService {
     return discardList;
   }
 
-  async changeAvailability(ws: WebSocket, msg: string) {
-    try {
-      const [itemId, availability] = msg.split(',').map(part => part.trim());
-      const menuItem = await this.menuItemRepository.findById(parseInt(itemId));
-      if (menuItem) {
-        const availabilityStatus = availability.toLowerCase() === 'true';
-        menuItem.availabilityStatus = availabilityStatus;
-        await this.menuItemRepository.save(menuItem);
-        ws.send(`Menu item ${menuItem.name} availability changed to ${availabilityStatus}.`);
+  public async changeAvailability(itemId: number, availability: boolean) {
+    const menuItem = await this.menuItemRepository.findById(itemId);
+    if (menuItem) {
+      menuItem.availabilityStatus = availability;
+      await this.menuItemRepository.save(menuItem);
 
-        if (!availabilityStatus) {
-          await this.initiateFeedbackForDiscardedItem(menuItem);
-        }
-      } else {
-        ws.send('Menu item not found.');
+      if (!availability) {
+        await this.initiateFeedbackForDiscardedItem(menuItem);
       }
-    } catch (error) {
-      console.error('Error changing availability:', error);
-      const errorMessage = (error as Error).message || 'An unknown error occurred';
-      ws.send(`Error changing availability: ${errorMessage}. Please try again later.`);
+      return menuItem;
+    } else {
+      throw new Error('Menu item not found.');
     }
   }
 
@@ -74,7 +52,7 @@ export class AdminService {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
 
-    const discardedItem = await this.discardedMenuItemRepository.saveDiscardedItem({
+    await this.discardedMenuItemRepository.saveDiscardedItem({
       menuItem: menuItem,
       expiresAt: expirationDate,
       createdAt: new Date()

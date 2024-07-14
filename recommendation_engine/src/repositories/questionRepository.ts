@@ -12,8 +12,4 @@ export class QuestionRepository {
   async saveQuestion(question: Partial<Question>): Promise<Question> {
     return this.questionRepository.save(question);
   }
-
-  async findAllQuestions(): Promise<Question[]> {
-    return this.questionRepository.find();
-  }
 }

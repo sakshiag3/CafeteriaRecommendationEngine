@@ -1,9 +1,9 @@
 import { WebSocket } from 'ws';
 import { User } from '../entity/User';
 import { UserService } from '../services/userService';
-import { AdminService } from '../services/adminService';
 import { handleLogout } from '../handlers/logoutHandler';
 import { MenuItemController } from '../controllers/menuItemController';
+import { AdminController } from '../controllers/adminController';
 
 export async function handleAdminCommands(
   ws: WebSocket,
@@ -12,7 +12,7 @@ export async function handleAdminCommands(
   userService: UserService,
   user: User,
   menuItemController: MenuItemController,
-  adminService: AdminService
+  adminController: AdminController
 ) {
   switch (command) {
     case '1':
@@ -39,7 +39,7 @@ export async function handleAdminCommands(
       currentStateSetter('deleteMenuItemId');
       break;
     case '6':
-      await adminService.viewDiscardList(ws);
+      await adminController.viewDiscardList(ws);
       currentStateSetter('authenticated');
       break;
     case '7':

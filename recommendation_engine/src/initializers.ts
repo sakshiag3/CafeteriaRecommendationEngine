@@ -8,6 +8,7 @@ import { MenuItemController } from './controllers/menuItemController';
 import { ChefController } from './controllers/chefController';
 import { EmployeeController } from './controllers/employeeController';
 import { AdminService } from './services/adminService';
+import { AdminController } from './controllers/adminController';
 
 export function initializeServices() {
   return {
@@ -16,12 +17,12 @@ export function initializeServices() {
     menuItemService: new MenuItemService(),
     recommendationService: new RecommendationService(),
     chefService: new ChefService(),
-    adminService: new AdminService()
   };
 }
 
 export function initializeControllers() {
   return {
+    adminController: new AdminController(),
     userController: new UserController(),
     menuItemController: new MenuItemController(),
     chefController: new ChefController(),

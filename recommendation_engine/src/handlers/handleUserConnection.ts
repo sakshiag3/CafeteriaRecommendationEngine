@@ -69,7 +69,7 @@ export async function handleUserConnection(
           currentUser,
           msg,
           services.userService,
-          services.adminService,
+          controllers.adminController,
           controllers.chefController,
           controllers.employeeController,
           controllers.menuItemController,
@@ -81,7 +81,7 @@ export async function handleUserConnection(
       }
     } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
       await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, services.employeeService, currentStateSetter, currentUser.id);
-    } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare') || currentState.startsWith('viewVotes')) {
+    } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')){
       await handleChefInputs(ws, msg, currentState, controllers.chefController, services.userService, services.roleService, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'changeAvailability') {
       await services.adminService.changeAvailability(ws, msg);

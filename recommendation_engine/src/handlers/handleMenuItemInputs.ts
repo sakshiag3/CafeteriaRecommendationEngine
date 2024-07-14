@@ -43,8 +43,6 @@ async function handleAddMenuItemStates(
       ws.send('Error: Please provide all details in the format "name, description, price, category, availabilityStatus, dietaryRestriction, spiceLevel, regionalPreference, isSweet".');
       return;
     }
-
-    // Validate dietaryRestriction, spiceLevel, and regionalPreference values
     const validDietaryRestrictions = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian'];
     const validSpiceLevels = ['High', 'Medium', 'Low'];
     const validRegionalPreferences = ['North Indian', 'South Indian', 'Other'];

@@ -17,9 +17,6 @@ export async function handleChefInputs(
     case 'selectRecommendations':
       await handleSelectRecommendations(ws, msg, chefController, userService, roleService, currentStateSetter, selectedIdsByMeal);
       break;
-    case 'viewVotes':
-      await handleViewVotes(ws, chefController, currentStateSetter);
-      break;
     case 'selectItemToPrepare':
       await handleSelectItemToPrepare(ws, msg, chefController, currentStateSetter);
       break;
@@ -57,14 +54,7 @@ async function handleSelectRecommendations(
   }
 }
 
-async function handleViewVotes(
-  ws: WebSocket,
-  chefController: ChefController,
-  currentStateSetter: (state: string) => void
-) {
-  await chefController.viewVotes(ws);
-  currentStateSetter('authenticated');
-}
+
 
 async function handleSelectItemToPrepare(
   ws: WebSocket,
