@@ -1,15 +1,14 @@
 import { WebSocket } from 'ws';
 import { User } from '../entity/User';
-import { UserService } from '../services/userService';
-import { handleLogout } from '../handlers/logoutHandler';
 import { MenuItemController } from '../controllers/menuItemController';
 import { AdminController } from '../controllers/adminController';
+import { UserController } from '../controllers/userController';
 
 export async function handleAdminCommands(
   ws: WebSocket,
   command: string,
   currentStateSetter: (state: string) => void,
-  userService: UserService,
+  userController: UserController,
   user: User,
   menuItemController: MenuItemController,
   adminController: AdminController
@@ -48,7 +47,7 @@ export async function handleAdminCommands(
       currentStateSetter('changeAvailability');
       break;
     case 'logout':
-      await handleLogout(ws, userService, user);
+      await userController.handleLogout(ws, user);
       break;
     default:
       ws.send('Unknown command.');

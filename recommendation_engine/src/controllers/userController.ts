@@ -51,5 +51,10 @@ export class UserController {
     ws.send('Invalid password. Please try again:');
     return false;
   }
-
+   async handleLogout(ws: WebSocket, user: User) {
+    user.logoutTime = new Date();
+    await this.userService.save(user);
+    ws.send(`Logging you out, ${user.username}.`);
+    ws.close();
+  }
 }

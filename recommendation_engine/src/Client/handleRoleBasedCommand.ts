@@ -8,27 +8,29 @@ import { handleChefCommands } from './handleChefCommands';
 import { handleEmployeeCommands } from './handleEmployeeCommands';
 import { MenuItemController } from '../controllers/menuItemController';
 import { AdminController } from '../controllers/adminController';
+import { UserController } from '../controllers/userController';
 
 export async function handleRoleBasedCommand(
   ws: WebSocket,
   user: User,
   command: string,
-  userService: UserService,
+  userController: UserController,
   adminController: AdminController,
   chefController: ChefController,
   employeeController: EmployeeController,
   menuItemController: MenuItemController,
   currentStateSetter: (state: string) => void
 ) {
+  
   switch (user.role.name) {
     case 'Admin':
-      await handleAdminCommands(ws, command, currentStateSetter, userService, user, menuItemController, adminController);
+      await handleAdminCommands(ws, command, currentStateSetter, userController, user, menuItemController, adminController);
       break;
     case 'Chef':
-      await handleChefCommands(ws, command, chefController, userService, user, menuItemController, currentStateSetter);
+      await handleChefCommands(ws, command, chefController, userController, user, menuItemController, currentStateSetter);
       break;
     case 'Employee':
-      await handleEmployeeCommands(ws, command, employeeController, userService, user, currentStateSetter);
+      await handleEmployeeCommands(ws, command, employeeController, userController, user, currentStateSetter);
       break;
     default:
       ws.send('Unknown role.');

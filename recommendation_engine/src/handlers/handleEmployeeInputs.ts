@@ -7,16 +7,16 @@ export async function handleEmployeeInputs(
   msg: string,
   currentState: string,
   employeeController: EmployeeController,
-  employeeService: EmployeeService,
   currentStateSetter: (state: string) => void,
   userId: number
 ) {
+  
   switch (currentState) {
     case 'employeeCastVote':
       await handleCastVote(ws, msg, employeeController, userId, currentStateSetter);
       break;
     case 'employeeGiveFeedback':
-      await handleGiveFeedback(ws, msg, employeeController, employeeService, userId, currentStateSetter);
+      await handleGiveFeedback(ws, msg, employeeController, userId, currentStateSetter);
       break;
     default:
       ws.send('Unknown state. Please try again.');
@@ -39,7 +39,6 @@ async function handleGiveFeedback(
   ws: WebSocket,
   msg: string,
   employeeController: EmployeeController,
-  employeeService: EmployeeService,
   userId: number,
   currentStateSetter: (state: string) => void
 ) {

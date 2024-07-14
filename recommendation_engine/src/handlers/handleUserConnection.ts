@@ -68,7 +68,7 @@ export async function handleUserConnection(
           ws,
           currentUser,
           msg,
-          services.userService,
+          controllers.userController,
           controllers.adminController,
           controllers.chefController,
           controllers.employeeController,
@@ -80,18 +80,16 @@ export async function handleUserConnection(
         ws.send('An error occurred. Please reconnect.');
       }
     } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
-      await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, services.employeeService, currentStateSetter, currentUser.id);
+      await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, currentStateSetter, currentUser.id);
     } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')){
       await handleChefInputs(ws, msg, currentState, controllers.chefController, services.userService, services.roleService, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'changeAvailability') {
-      await services.adminService.changeAvailability(ws, msg);
+      await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser')) {
       await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, services.userService, currentStateSetter);
     } else if (currentState.startsWith('addMenuItem') || currentState.startsWith('updateMenuItem') || currentState.startsWith('deleteMenuItem')) {
-      await handleMenuItemInputs(ws, msg, currentState, services.userService, services.roleService, services.menuItemService, currentStateSetter);
-    } else if (currentState === 'addRole') {
-      await controllers.userController.handleAddRole({ name: msg });
+      await handleMenuItemInputs(ws, msg, currentState, currentStateSetter);
     } else if (currentState === 'employeeEnterMenuItemIdForSurvey' || currentState === 'employeeAnsweringSurvey') {
       await surveyHandler(
         ws,

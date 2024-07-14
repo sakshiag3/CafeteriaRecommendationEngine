@@ -14,9 +14,6 @@ export function initializeServices() {
   return {
     userService: new UserService(),
     roleService: new RoleService(),
-    menuItemService: new MenuItemService(),
-    recommendationService: new RecommendationService(),
-    chefService: new ChefService(),
   };
 }
 

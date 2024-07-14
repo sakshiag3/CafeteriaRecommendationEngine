@@ -1,15 +1,14 @@
 import { WebSocket } from 'ws';
 import { User } from '../entity/User';
-import { UserService } from '../services/userService';
-import { handleLogout } from '../handlers/logoutHandler';
 import { ChefController } from '../controllers/chefController';
 import { MenuItemController } from '../controllers/menuItemController';
+import { UserController } from '../controllers/userController';
 
 export async function handleChefCommands(
   ws: WebSocket,
   command: string,
   chefController: ChefController,
-  userService: UserService,
+  userController: UserController,
   user: User,
   menuItemController: MenuItemController,
   currentStateSetter: (state: string) => void
@@ -33,7 +32,7 @@ export async function handleChefCommands(
       ws.send('Format: BreakfastID,LunchID,DinnerID');
       break;
     case 'logout':
-      await handleLogout(ws, userService, user);
+      await userController.handleLogout(ws, user);
       break;
     default:
       ws.send('Unknown command.');
