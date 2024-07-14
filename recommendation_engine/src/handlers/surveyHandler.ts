@@ -4,7 +4,6 @@ import { EmployeeController } from '../controllers/employeeController';
 export async function surveyHandler(
   ws: WebSocket,
   command: string,
-  employeeController: EmployeeController,
   userId: number,
   currentState: string,
   currentStateSetter: (state: string) => void,
@@ -15,6 +14,8 @@ export async function surveyHandler(
   currentQuestionIndexSetter: (index: number) => void,
   currentQuestionIndex: number
 ) {
+  
+  const employeeController= new EmployeeController();
   switch (currentState) {
     case 'employeeEnterMenuItemIdForSurvey':
       const menuItemId = parseInt(command);

@@ -7,12 +7,13 @@ import { UserController } from '../controllers/userController';
 export async function handleChefCommands(
   ws: WebSocket,
   command: string,
-  chefController: ChefController,
-  userController: UserController,
   user: User,
-  menuItemController: MenuItemController,
   currentStateSetter: (state: string) => void
 ) {
+   const chefController= new ChefController();
+   const userController= new UserController();
+  const menuItemController= new MenuItemController();
+
   switch (command) {
     case '1':
       await menuItemController.showMenuItems(ws);

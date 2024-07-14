@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const wsUrl = process.env.WS_URL || 'ws://localhost:8080';
+const wsUrl = process.env.WS_URL as string ;
 const ws = new WebSocket(wsUrl);
 
 ws.on('open', () => {

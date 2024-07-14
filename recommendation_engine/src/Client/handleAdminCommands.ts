@@ -8,11 +8,12 @@ export async function handleAdminCommands(
   ws: WebSocket,
   command: string,
   currentStateSetter: (state: string) => void,
-  userController: UserController,
-  user: User,
-  menuItemController: MenuItemController,
-  adminController: AdminController
+  user: User
 ) {
+
+  const adminController= new AdminController();
+  const userController= new UserController();
+  const menuItemController= new MenuItemController();
   switch (command) {
     case '1':
       ws.send('Admin: Add User');

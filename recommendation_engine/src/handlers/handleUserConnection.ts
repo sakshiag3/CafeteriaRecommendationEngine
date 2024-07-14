@@ -6,11 +6,14 @@ import { handleChefInputs } from './handleChefInputs';
 import { handleEmployeeInputs } from './handleEmployeeInputs';
 import { showRoleBasedOptions } from '../Client/showRoleBasedOptions';
 import { surveyHandler } from './surveyHandler';
+import { UserController } from '../controllers/userController';
+import { AdminController } from '../controllers/adminController';
 
-export async function handleUserConnection(
-  ws: WebSocket,
-  controllers: any
-) {
+export async function handleUserConnection(ws: WebSocket) {
+  
+  const adminController= new AdminController();
+  const userController= new UserController();
+
   let currentUser: any | null = null;
   let currentState = 'username';
   let selectedIdsByMeal: { meal: string; ids: string[] }[] = [];
@@ -41,16 +44,16 @@ export async function handleUserConnection(
     console.log(`Received message: ${msg}`);
 
     if (currentState === 'username') {
-      currentUser = await controllers.userController.handleUsername(ws, msg);
+      currentUser = await userController.handleUsername(ws, msg);
       if (currentUser) {
         currentState = 'password';
       }
     } else if (currentState === 'password') {
-      const authenticated = await controllers.userController.handlePassword(ws, msg, currentUser);
+      const authenticated = await userController.handlePassword(ws, msg, currentUser);
       if (authenticated) {
         currentState = 'authenticated';
         showRoleBasedOptions(ws, currentUser.role.name);
-        const notifications = await controllers.userController.getNotifications(currentUser);
+        const notifications = await userController.getNotifications(currentUser);
         if (notifications.length > 0) {
           notifications.forEach((notification: any) => {
             ws.send(`Notification: ${notification.content}`);
@@ -63,27 +66,18 @@ export async function handleUserConnection(
       }
     } else if (currentState === 'authenticated') {
       if (currentUser) {
-        await handleRoleBasedCommand(
-          ws,
-          currentUser,
-          msg,
-          controllers.userController,
-          controllers.adminController,
-          controllers.chefController,
-          controllers.employeeController,
-          controllers.menuItemController,
-          currentStateSetter
-        );
+        await handleRoleBasedCommand(ws, currentUser, msg, currentStateSetter);
         // showRoleBasedOptions(ws, currentUser.role.name);
       } else {
         ws.send('An error occurred. Please reconnect.');
       }
     } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
-      await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, currentStateSetter, currentUser.id);
-    } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')){
+      await handleEmployeeInputs(ws, msg, currentState, currentStateSetter, currentUser.id);
+    } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')) {
       await handleChefInputs(ws, msg, currentState, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'changeAvailability') {
-      await controllers.adminController.changeAvailability(ws, msg);
+      const [itemId, availability] = msg.split(' '); 
+      await adminController.changeAvailability(ws, parseInt(itemId), availability === 'true');
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser')) {
       await handleUserInputs(ws, msg, currentState, currentStateSetter);
@@ -93,7 +87,6 @@ export async function handleUserConnection(
       await surveyHandler(
         ws,
         msg,
-        controllers.employeeController,
         currentUser.id,
         currentState,
         currentStateSetter,

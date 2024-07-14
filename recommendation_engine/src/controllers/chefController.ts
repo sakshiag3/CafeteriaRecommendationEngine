@@ -152,10 +152,16 @@ export class ChefController {
   }
 
   public async notifyEmployees(userService: UserService, roleService: RoleService, ws: WebSocket) {
-    const chefRole = await roleService.getRoleByName('Employee');
-    if (chefRole) {
-      await userService.createNotification('Menu Items have been rolled out for today. Please cast your vote!', chefRole.id);
-      ws.send('Notification sent to Employee role.');
+    try {
+      const chefRole = await roleService.getRoleByName('Employee');
+      if (chefRole) {
+        await userService.createNotification('Menu Items have been rolled out for today. Please cast your vote!', chefRole.id);
+        ws.send('Notification sent to Employee role.');
+      }
+    } catch (error) {
+      console.error('Error notifying employees:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      ws.send(`Error notifying employees: ${errorMessage}. Please try again later.`);
     }
   }
 
@@ -165,23 +171,29 @@ export class ChefController {
     currentStateSetter: (state: string) => void,
     selectedIdsByMeal: { meal: string; ids: string[] }[]
   ) {
-    if (selectedIdsByMeal.length === 0) {
-      await this.getSelectedRecommendations(ws, currentStateSetter);
-      selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
-      ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
-    } else if (selectedIdsByMeal.length === 1) {
-      selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
-      ws.send('Please enter the IDs of the items you wish to select for Lunch, separated by commas:');
-      selectedIdsByMeal.push({ meal: 'Lunch', ids: [] });
-    } else if (selectedIdsByMeal.length === 2) {
-      selectedIdsByMeal[1].ids = msg.split(',').map(id => id.trim());
-      ws.send('Please enter the IDs of the items you wish to select for Dinner, separated by commas:');
-      selectedIdsByMeal.push({ meal: 'Dinner', ids: [] });
-    } else if (selectedIdsByMeal.length === 3) {
-      selectedIdsByMeal[2].ids = msg.split(',').map(id => id.trim());
-      await this.selectRecommendations(ws, selectedIdsByMeal);
-      currentStateSetter('authenticated');
-      await this.notifyEmployees(this.userService, this.roleService, ws);
+    try {
+      if (selectedIdsByMeal.length === 0) {
+        await this.getSelectedRecommendations(ws, currentStateSetter);
+        selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
+        ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
+      } else if (selectedIdsByMeal.length === 1) {
+        selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
+        ws.send('Please enter the IDs of the items you wish to select for Lunch, separated by commas:');
+        selectedIdsByMeal.push({ meal: 'Lunch', ids: [] });
+      } else if (selectedIdsByMeal.length === 2) {
+        selectedIdsByMeal[1].ids = msg.split(',').map(id => id.trim());
+        ws.send('Please enter the IDs of the items you wish to select for Dinner, separated by commas:');
+        selectedIdsByMeal.push({ meal: 'Dinner', ids: [] });
+      } else if (selectedIdsByMeal.length === 3) {
+        selectedIdsByMeal[2].ids = msg.split(',').map(id => id.trim());
+        await this.selectRecommendations(ws, selectedIdsByMeal);
+        currentStateSetter('authenticated');
+        await this.notifyEmployees(this.userService, this.roleService, ws);
+      }
+    } catch (error) {
+      console.error('Error handling select recommendations:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      ws.send(`Error selecting recommendations: ${errorMessage}. Please try again later.`);
     }
   }
 
@@ -190,8 +202,14 @@ export class ChefController {
     msg: string,
     currentStateSetter: (state: string) => void
   ) {
-    const mealIds = await this.parseMealIds(msg);
-    await this.selectItemToPrepare(ws, mealIds);
-    currentStateSetter('authenticated');
+    try {
+      const mealIds = await this.parseMealIds(msg);
+      await this.selectItemToPrepare(ws, mealIds);
+      currentStateSetter('authenticated');
+    } catch (error) {
+      console.error('Error handling select item to prepare:', error);
+      const errorMessage = (error as Error).message || 'An unknown error occurred';
+      ws.send(`Error selecting item to prepare: ${errorMessage}. Please try again later.`);
+    }
   }
 }

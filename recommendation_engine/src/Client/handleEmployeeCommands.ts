@@ -6,11 +6,12 @@ import { UserController } from '../controllers/userController';
 export async function handleEmployeeCommands(
   ws: WebSocket,
   command: string,
-  employeeController: EmployeeController,
-  userController: UserController,
   user: User,
   currentStateSetter: (state: string) => void
 ) {
+  
+  const userController= new UserController();
+  const employeeController = new EmployeeController();
   switch (command) {
     case '1':
       await employeeController.viewSelectedMenuItems(ws, user.id);
