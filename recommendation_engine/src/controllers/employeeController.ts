@@ -18,7 +18,7 @@ export class EmployeeController {
       
       const sortedRecommendations = userPreferences.map(menuItem => selectedRecommendations.find(r => r.menuItem.id === menuItem.id)!);
 
-      const formattedTables = this.employeeService.formatSelectedRecommendationsToTables(sortedRecommendations);
+      const formattedTables = Util.formatSelectedRecommendationsToTables(sortedRecommendations);
       ws.send(`Selected menu items for today:\n\n${formattedTables}`);
     } catch (error) {
       console.error('Error viewing selected menu items:', error);
@@ -35,7 +35,7 @@ export class EmployeeController {
       
       const sortedSelections = userPreferences.map(menuItem => finalSelections.find(f => f.selectedRecommendation.menuItem.id === menuItem.id)!);
 
-      const formattedTables = this.employeeService.formatFinalSelectionsToTables(sortedSelections);
+      const formattedTables = Util.formatFinalSelectionsToTables(sortedSelections);
       ws.send(`Prepared menu items for today:\n\n${formattedTables}`);
     } catch (error) {
       console.error('Error viewing prepared menu items:', error);
@@ -67,7 +67,7 @@ export class EmployeeController {
   public async viewSurveys(ws: WebSocket, userId: number) {
     try {
       const surveys = await this.employeeService.getSurveys(userId);
-      const formattedSurveys = this.employeeService.formatSurveysToTable(surveys);
+      const formattedSurveys = Util.formatSurveysToTable(surveys);
       ws.send(`Surveys available for feedback:\n\n${formattedSurveys}`);
     } catch (error) {
       console.error('Error viewing surveys:', error);

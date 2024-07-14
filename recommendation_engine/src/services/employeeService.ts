@@ -89,17 +89,7 @@ export class EmployeeService {
     return surveys;
   }
 
-  public formatSurveysToTable(surveys: any[]) {
-    let table = 'Surveys:\n';
-    table += '+----+-----------------+--------------------+-------+\n';
-    table += '| ID | Name            | Description        | Price |\n';
-    table += '+----+-----------------+--------------------+-------+\n';
-    surveys.forEach((item) => {
-      table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.toFixed(2).padEnd(5)} |\n`;
-    });
-    table += '+----+-----------------+--------------------+-------+\n';
-    return table;
-  }
+
 
   public async getSurveyQuestions() {
     return this.employeeRepository.findAllQuestions();
@@ -124,55 +114,6 @@ export class EmployeeService {
     }
 
     return 'Thank you for your feedback!';
-  }
-
-  public formatSelectedRecommendationsToTables(recommendations: SelectedRecommendation[]) {
-    const breakfastItems = recommendations.filter(r => r.meal === 'Breakfast');
-    const lunchItems = recommendations.filter(r => r.meal === 'Lunch');
-    const dinnerItems = recommendations.filter(r => r.meal === 'Dinner');
-
-    const formatTable = (title: string, items: SelectedRecommendation[]) => {
-      let table = `${title}:\n`;
-      table += '+----+-----------------+--------------------+-------+------------+\n';
-      table += '| ID | Name            | Description        | Price | Available  |\n';
-      table += '+----+-----------------+--------------------+-------+------------+\n';
-      items.forEach((item) => {
-        const availabilityStatus = item.menuItem.availabilityStatus ? 'Yes' : 'No';
-        table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.toFixed(2).padEnd(5)} | ${availabilityStatus.padEnd(10)} |\n`;
-      });
-      table += '+----+-----------------+--------------------+-------+------------+\n';
-      return table;
-    };
-
-    const breakfastTable = formatTable('Breakfast', breakfastItems);
-    const lunchTable = formatTable('Lunch', lunchItems);
-    const dinnerTable = formatTable('Dinner', dinnerItems);
-
-    return `${breakfastTable}\n${lunchTable}\n${dinnerTable}`;
-  }
-
-  public formatFinalSelectionsToTables(finalSelections: FinalSelection[]) {
-    const breakfastItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Breakfast');
-    const lunchItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Lunch');
-    const dinnerItems = finalSelections.filter(r => r.selectedRecommendation.meal === 'Dinner');
-
-    const formatTable = (title: string, items: FinalSelection[]) => {
-      let table = `${title}:\n`;
-      table += '+----+-----------------+--------------------+-------+\n';
-      table += '| ID | Name            | Description        | Price |\n';
-      table += '+----+-----------------+--------------------+-------+\n';
-      items.forEach((item) => {
-        table += `| ${String(item.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${item.selectedRecommendation.menuItem.price.toFixed(2).padEnd(5)} |\n`;
-      });
-      table += '+----+-----------------+--------------------+-------+\n';
-      return table;
-    };
-
-    const breakfastTable = formatTable('Breakfast', breakfastItems);
-    const lunchTable = formatTable('Lunch', lunchItems);
-    const dinnerTable = formatTable('Dinner', dinnerItems);
-
-    return `${breakfastTable}\n${lunchTable}\n${dinnerTable}`;
   }
 
   public async getProfileQuestions() {
