@@ -4,19 +4,25 @@ import { MenuItemService } from '../services/menuItemService';
 import { MenuItemRepository } from '../repositories/menuItemRepository';
 import { FinalSelection } from '../entity/FinalSelection';
 import { ChefService } from '../services/chefService';
+import { UserService } from '../services/userService';
+import { RoleService } from '../services/roleService';
 import { Util } from '../utils/Util';
 
 export class ChefController {
   private recommendationService: RecommendationService;
   private chefService: ChefService;
-
   private menuItemService: MenuItemService;
   private menuItemRepository: MenuItemRepository;
+  private userService: UserService;
+  private roleService: RoleService;
+
   constructor() {
     this.recommendationService = new RecommendationService();
     this.chefService = new ChefService();
-    this.menuItemService= new MenuItemService();
-    this.menuItemRepository= new MenuItemRepository();
+    this.menuItemService = new MenuItemService();
+    this.menuItemRepository = new MenuItemRepository();
+    this.userService = new UserService();
+    this.roleService = new RoleService();
   }
 
   public async fetchRecommendations(ws: WebSocket) {
@@ -95,7 +101,8 @@ export class ChefController {
       ws.send(`Error viewing votes: ${errorMessage}. Please try again later.`);
     }
   }
-  async parseMealIds(msg: string): Promise<{ meal: string; id: number; }[]> {
+
+  public async parseMealIds(msg: string): Promise<{ meal: string; id: number; }[]> {
     const [breakfastId, lunchId, dinnerId] = msg.split(',').map(id => parseInt(id.trim(), 10));
     return [
       { meal: 'Breakfast', id: breakfastId },
@@ -103,7 +110,7 @@ export class ChefController {
       { meal: 'Dinner', id: dinnerId }
     ];
   }
-  
+
   public async getSelectedRecommendationsByDateRange(start: Date, end: Date) {
     return this.recommendationService.getSelectedRecommendationsByDateRange(start, end);
   }
@@ -142,5 +149,49 @@ export class ChefController {
 
   public async getFinalSelectionsForDate(start: Date, end: Date): Promise<FinalSelection[]> {
     return this.chefService.getFinalSelectionsForDate(start, end);
+  }
+
+  public async notifyEmployees(userService: UserService, roleService: RoleService, ws: WebSocket) {
+    const chefRole = await roleService.getRoleByName('Employee');
+    if (chefRole) {
+      await userService.createNotification('Menu Items have been rolled out for today. Please cast your vote!', chefRole.id);
+      ws.send('Notification sent to Employee role.');
+    }
+  }
+
+  public async handleSelectRecommendations(
+    ws: WebSocket,
+    msg: string,
+    currentStateSetter: (state: string) => void,
+    selectedIdsByMeal: { meal: string; ids: string[] }[]
+  ) {
+    if (selectedIdsByMeal.length === 0) {
+      await this.getSelectedRecommendations(ws, currentStateSetter);
+      selectedIdsByMeal.push({ meal: 'Breakfast', ids: [] });
+      ws.send('Please enter the IDs of the items you wish to select for Breakfast, separated by commas:');
+    } else if (selectedIdsByMeal.length === 1) {
+      selectedIdsByMeal[0].ids = msg.split(',').map(id => id.trim());
+      ws.send('Please enter the IDs of the items you wish to select for Lunch, separated by commas:');
+      selectedIdsByMeal.push({ meal: 'Lunch', ids: [] });
+    } else if (selectedIdsByMeal.length === 2) {
+      selectedIdsByMeal[1].ids = msg.split(',').map(id => id.trim());
+      ws.send('Please enter the IDs of the items you wish to select for Dinner, separated by commas:');
+      selectedIdsByMeal.push({ meal: 'Dinner', ids: [] });
+    } else if (selectedIdsByMeal.length === 3) {
+      selectedIdsByMeal[2].ids = msg.split(',').map(id => id.trim());
+      await this.selectRecommendations(ws, selectedIdsByMeal);
+      currentStateSetter('authenticated');
+      await this.notifyEmployees(this.userService, this.roleService, ws);
+    }
+  }
+
+  public async handleSelectItemToPrepare(
+    ws: WebSocket,
+    msg: string,
+    currentStateSetter: (state: string) => void
+  ) {
+    const mealIds = await this.parseMealIds(msg);
+    await this.selectItemToPrepare(ws, mealIds);
+    currentStateSetter('authenticated');
   }
 }

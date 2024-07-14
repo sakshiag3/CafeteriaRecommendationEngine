@@ -9,8 +9,7 @@ import { surveyHandler } from './surveyHandler';
 
 export async function handleUserConnection(
   ws: WebSocket,
-  controllers: any,
-  services: any
+  controllers: any
 ) {
   let currentUser: any | null = null;
   let currentState = 'username';
@@ -82,12 +81,12 @@ export async function handleUserConnection(
     } else if (currentState.startsWith('employeeCastVote') || currentState.startsWith('employeeGiveFeedback')) {
       await handleEmployeeInputs(ws, msg, currentState, controllers.employeeController, currentStateSetter, currentUser.id);
     } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')){
-      await handleChefInputs(ws, msg, currentState, controllers.chefController, services.userService, services.roleService, currentStateSetter, selectedIdsByMeal);
+      await handleChefInputs(ws, msg, currentState, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'changeAvailability') {
       await controllers.adminController.changeAvailability(ws, msg);
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser')) {
-      await handleUserInputs(ws, msg, currentState, controllers.userController, services.roleService, services.userService, currentStateSetter);
+      await handleUserInputs(ws, msg, currentState, currentStateSetter);
     } else if (currentState.startsWith('addMenuItem') || currentState.startsWith('updateMenuItem') || currentState.startsWith('deleteMenuItem')) {
       await handleMenuItemInputs(ws, msg, currentState, currentStateSetter);
     } else if (currentState === 'employeeEnterMenuItemIdForSurvey' || currentState === 'employeeAnsweringSurvey') {
