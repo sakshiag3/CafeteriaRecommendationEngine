@@ -18,13 +18,13 @@ export async function surveyHandler(
   const employeeController= new EmployeeController();
   switch (currentState) {
     case 'employeeEnterMenuItemIdForSurvey':
-      const menuItemId = parseInt(command);
-      if (isNaN(menuItemId)) {
-        ws.send('Invalid menu item ID. Please enter a valid menu item ID:');
+      const discardedMenuItemId = parseInt(command);
+      if (isNaN(discardedMenuItemId)) {
+        ws.send('Invalid discarded menu item ID. Please enter a valid discarded menu item ID:');
         return;
       }
-      await employeeController.displaySurveyQuestions(ws);
-      currentSurveyMenuItemIdSetter(menuItemId);
+      await employeeController.displaySurveyQuestions(ws, discardedMenuItemId);
+      currentSurveyMenuItemIdSetter(discardedMenuItemId);
       currentQuestionIndexSetter(0);
       currentStateSetter('employeeAnsweringSurvey');
       ws.send('Please enter your response for question 1:');

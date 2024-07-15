@@ -22,7 +22,7 @@ export class SentimentAnalyzer {
   }
 
   public async analyzeSentiment(text: string): Promise<number> {
-    
+    // Ensure initialization is complete
     await this.initializationPromise;
 
     if (!this.classifier) {

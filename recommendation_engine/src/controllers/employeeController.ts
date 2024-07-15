@@ -85,9 +85,9 @@ export class EmployeeController {
     }
   }
 
-  public async displaySurveyQuestions(ws: WebSocket) {
+  public async displaySurveyQuestions(ws: WebSocket, discardedMenuItemId: number) {
     try {
-      const questions = await this.employeeService.getSurveyQuestions();
+      const questions = await this.employeeService.getSurveyQuestions(discardedMenuItemId);
       let message = 'Survey Questions:\n';
       questions.forEach((question, index) => {
         message += `${index + 1}. ${question.questionText}\n`;

@@ -77,25 +77,26 @@ export class AdminService {
     try {
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + FEEDBACK_EXPIRATION_DAYS);
-
-      await this.discardedMenuItemRepository.saveDiscardedItem({
-        menuItem: menuItem,
-        expiresAt: expirationDate,
-        createdAt: new Date()
-      });
-
+  
+      const discardedMenuItem = await this.discardedMenuItemRepository.saveDiscardedMenuItem(
+        menuItem,
+        expirationDate,
+        new Date()
+      );
+  
       const questions = [
         `${FEEDBACK_QUESTION_1}${menuItem.name}?`,
         `${FEEDBACK_QUESTION_2}${menuItem.name}${FEEDBACK_QUESTION_3}`,
         FEEDBACK_QUESTION_4,
       ];
-
+  
       for (const questionText of questions) {
-        await this.questionRepository.saveQuestion({ questionText });
+        await this.questionRepository.saveQuestionWithDiscardedItem(questionText, discardedMenuItem);
       }
     } catch (error) {
       console.error('Error initiating feedback for discarded item:', error);
       throw new Error('Failed to initiate feedback.');
     }
   }
+  
 }

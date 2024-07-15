@@ -31,7 +31,7 @@ export async function handleEmployeeCommands(
       break;
     case '5':
       await employeeController.viewSurveys(ws, user.id);
-      currentStateSetter('employeeViewSurveys');
+      currentStateSetter('authenticated');
       break;
     case '6':
       ws.send('Employee: Enter Menu Item ID');

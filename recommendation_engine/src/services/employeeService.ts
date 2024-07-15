@@ -1,4 +1,5 @@
 import { EmployeeRepository } from '../repositories/employeeRepository';
+import { QuestionRepository } from '../repositories/questionRepository';
 import { SentimentAnalyzer } from './sentimentAnalyzer';
 import { User } from '../entity/User';
 import { Feedback } from '../entity/Feedback';
@@ -15,10 +16,13 @@ import { UserProfileQuestion } from '../entity/UserProfileQuestion';
 export class EmployeeService {
   private sentimentAnalyzer: SentimentAnalyzer;
   private employeeRepository: EmployeeRepository;
+  private questionRepository: QuestionRepository;
+  
 
   constructor() {
     this.sentimentAnalyzer = new SentimentAnalyzer();
     this.employeeRepository = new EmployeeRepository();
+    this.questionRepository = new QuestionRepository();
   }
 
   public async getSelectedMenuItems(start: Date, end: Date) {
@@ -83,7 +87,6 @@ export class EmployeeService {
       feedback.date = new Date();
       await this.employeeRepository.saveFeedback(feedback);
 
-      // Ensure the classifier initialization is complete
       const sentimentScore = await this.sentimentAnalyzer.analyzeSentiment(comment);
       const existingSentiment = await this.employeeRepository.findSentimentScore(menuItemId);
 
@@ -118,9 +121,9 @@ export class EmployeeService {
     }
   }
 
-  public async getSurveyQuestions() {
+  public async getSurveyQuestions(discardedMenuItemId: number) {
     try {
-      return await this.employeeRepository.findAllQuestions();
+      return await this.questionRepository.findQuestionsByDiscardedMenuItemId(discardedMenuItemId);
     } catch (error) {
       console.error('Error fetching survey questions:', error);
       throw new Error('An error occurred while fetching survey questions. Please try again later.');
@@ -129,13 +132,13 @@ export class EmployeeService {
 
   public async submitSurvey(userId: number, menuItemId: number, responses: string[]) {
     try {
-      const discardedItem = await this.employeeRepository.findAllDiscardedMenuItems().then(items => items.find(item => item.menuItem.id === menuItemId));
+      const discardedItem = await this.employeeRepository.findAllDiscardedMenuItems().then(items => items.find(item => item.id === menuItemId));
 
       if (!discardedItem) {
         return 'No feedback form available for this item.';
       }
 
-      const questions = await this.getSurveyQuestions();
+      const questions = await this.getSurveyQuestions(menuItemId);
 
       for (let i = 0; i < questions.length; i++) {
         const feedbackForm = new FeedbackForm();
