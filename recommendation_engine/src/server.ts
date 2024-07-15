@@ -3,7 +3,7 @@ import WebSocket from 'ws';
 import { handleUserConnection } from './handlers/handleUserConnection';
 
 AppDataSource.initialize().then(async connection => {
-  const wss = new WebSocket.Server({ port: 8080 });
+  const wss = new WebSocket.Server({ port: 8081 });
 
   wss.on('connection', (ws: WebSocket) => {
     handleUserConnection(ws);

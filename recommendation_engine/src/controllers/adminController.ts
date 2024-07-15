@@ -6,12 +6,12 @@ import { UserController } from '../controllers/userController';
 import { Util } from '../utils/Util';
 import { NewUserDetails } from '../Interface/NewUserDetails';
 
+let newUserDetails: NewUserDetails = {};
 export class AdminController {
   private adminService: AdminService;
   private userService: UserService;
   private roleService: RoleService;
   private userController: UserController;
-  private newUserDetails: NewUserDetails = {};
 
   constructor() {
     this.adminService = new AdminService();
@@ -47,8 +47,8 @@ export class AdminController {
       if (existingUser) {
         ws.send(`Error: User with username ${msg} already exists. Please enter a different username:`);
       } else {
-        this.newUserDetails.username = msg;
-        ws.send(`Enter password for the new user ${this.newUserDetails.username}:`);
+        newUserDetails.username = msg;
+        ws.send(`Enter password for the new user ${newUserDetails.username}:`);
         currentStateSetter('addUserPassword');
       }
     } catch (error) {
@@ -59,10 +59,10 @@ export class AdminController {
 
   public async handleAddUserPassword(ws: WebSocket, msg: string, currentStateSetter: (state: string) => void) {
     try {
-      this.newUserDetails.password = msg;
+      newUserDetails.password = msg;
       const roles = await this.roleService.getRoles();
       const roleNames = roles.map(role => role.name);
-      ws.send(`Enter role for the new user ${this.newUserDetails.username}. Available roles: ${roleNames.join(', ')}:`);
+      ws.send(`Enter role for the new user ${newUserDetails.username}. Available roles: ${roleNames.join(', ')}:`);
       currentStateSetter('addUserRole');
     } catch (error) {
       console.error('Error handling password:', error);
@@ -77,14 +77,14 @@ export class AdminController {
         const roles = await this.roleService.getRoles();
         ws.send(`Error: Role ${msg} does not exist. Available roles: ${roles.map(role => role.name).join(', ')}. Please enter a valid role:`);
       } else {
-        this.newUserDetails.roleName = msg;
+        newUserDetails.roleName = msg;
         await this.userController.handleAddUser({
-          username: this.newUserDetails.username!,
-          password: this.newUserDetails.password!,
-          role: this.newUserDetails.roleName!
+          username: newUserDetails.username!,
+          password: newUserDetails.password!,
+          role: newUserDetails.roleName!
         });
-        ws.send(`User ${this.newUserDetails.username} added successfully.`);
-        this.newUserDetails = {};
+        ws.send(`User ${newUserDetails.username} added successfully.`);
+        newUserDetails = {};
         currentStateSetter('authenticated');
       }
     } catch (error) {

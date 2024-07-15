@@ -28,7 +28,9 @@ export class UserService {
       if (!role) {
         throw new Error('Role not found');
       }
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
       const user = new User();
       user.username = username;
       user.password = hashedPassword;

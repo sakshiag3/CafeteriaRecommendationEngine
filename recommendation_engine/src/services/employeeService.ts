@@ -6,7 +6,6 @@ import { Vote } from '../entity/Vote';
 import { FeedbackForm } from '../entity/FeedbackForm';
 import { UserProfileResponse } from '../entity/UserProfileResponse';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
-import { FinalSelection } from '../entity/FinalSelection';
 import { MenuItem } from '../entity/MenuItem';
 import { SentimentScore } from '../entity/SentimentScore';
 import { Question } from '../entity/Question';
@@ -52,11 +51,9 @@ export class EmployeeService {
   public async castVote(userId: number, selectedRecommendationId: number, meal: string, start: Date, end: Date) {
     try {
       const existingVote = await this.employeeRepository.findVote(userId, meal, start, end);
-
       if (existingVote) {
         return `You have already voted for ${meal} today.`;
       }
-
       const vote = new Vote();
       vote.user = { id: userId } as User;
       vote.selectedRecommendation = { id: selectedRecommendationId } as SelectedRecommendation;
