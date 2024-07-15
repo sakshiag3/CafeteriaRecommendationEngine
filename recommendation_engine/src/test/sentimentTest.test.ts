@@ -13,7 +13,7 @@ describe('SentimentAnalyzer', () => {
     mockClassifier = jest.fn();
     (pipeline as jest.Mock).mockResolvedValue(mockClassifier);
     sentimentAnalyzer = new SentimentAnalyzer();
-    await sentimentAnalyzer.initialize();
+    await sentimentAnalyzer.waitForInitialization(); 
   });
 
   it('should initialize the classifier', () => {
@@ -27,7 +27,7 @@ describe('SentimentAnalyzer', () => {
 
     const text = 'The food was absolutely delicious!';
     const score = await sentimentAnalyzer.analyzeSentiment(text);
-    expect(score).toBe(99.0);
+    expect(score).toBe(99.0); 
   });
 
   it('should analyze negative feedback and return the scaled score', async () => {
@@ -47,7 +47,7 @@ describe('SentimentAnalyzer', () => {
 
     const text = 'The food was okay, not bad but not great either.';
     const score = await sentimentAnalyzer.analyzeSentiment(text);
-    expect(score).toBe(52.0);
+    expect(score).toBe(52.0); 
   });
 
   it('should handle unexpected sentiment labels gracefully', async () => {
@@ -67,6 +67,6 @@ describe('SentimentAnalyzer', () => {
 
     const text = '';
     const score = await sentimentAnalyzer.analyzeSentiment(text);
-    expect(score).toBe(0.0);
+    expect(score).toBe(0.0); 
   });
 });

@@ -32,7 +32,7 @@ export class Util {
         table += '+----+-----------------+--------------------+-------+------------+\n';
         items.forEach((item) => {
           const availabilityStatus = item.menuItem.availabilityStatus ? 'Yes' : 'No';
-          table += `| ${String(item.menuItem.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${String(item.menuItem.price).padEnd(5)} | ${availabilityStatus.padEnd(10)} |\n`;
+          table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${String(item.menuItem.price).padEnd(5)} | ${availabilityStatus.padEnd(10)} |\n`;
         });
         table += '+----+-----------------+--------------------+-------+------------+\n';
         return table;
@@ -79,7 +79,7 @@ export class Util {
         table += '| ID | Name            | Description        | Price |\n';
         table += '+----+-----------------+--------------------+-------+\n';
         items.forEach((item) => {
-          table += `| ${String(item.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${item.selectedRecommendation.menuItem.price.toFixed(2).padEnd(5)} |\n`;
+          table += `| ${String(item.selectedRecommendation.menuItem.id).padEnd(2)} | ${item.selectedRecommendation.menuItem.name.padEnd(15)} | ${item.selectedRecommendation.menuItem.description.padEnd(18)} | ${item.selectedRecommendation.menuItem.price.padEnd(5)} |\n`;
         });
         table += '+----+-----------------+--------------------+-------+\n';
         return table;
@@ -98,7 +98,7 @@ export class Util {
       table += '| ID | Name            | Description        | Price |\n';
       table += '+----+-----------------+--------------------+-------+\n';
       surveys.forEach((item) => {
-        table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.toFixed(2).padEnd(5)} |\n`;
+        table += `| ${String(item.id).padEnd(2)} | ${item.menuItem.name.padEnd(15)} | ${item.menuItem.description.padEnd(18)} | ${item.menuItem.price.padEnd(5)} |\n`;
       });
       table += '+----+-----------------+--------------------+-------+\n';
       return table;

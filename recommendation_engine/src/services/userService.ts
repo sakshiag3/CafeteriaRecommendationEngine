@@ -41,7 +41,6 @@ export class UserService {
       throw new Error('Could not add user');
     }
   }
-
   async save(user: User) {
     try {
       await this.userRepository.save(user);
