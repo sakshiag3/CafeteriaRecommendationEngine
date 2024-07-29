@@ -47,15 +47,19 @@ export class Util {
   
     public static formatVotesToTable(voteCounts: { [key: string]: number }) {
       let table = 'Votes:\n';
-      table += '+----+---------------------+------------+\n';
-      table += '| ID | Menu Item           | Vote Count |\n';
-      table += '+----+---------------------+------------+\n';
+      table += '+----+---------------------+------------+------------------+\n';
+      table += '| ID | Menu Item           | Vote Count | Category         |\n';
+      table += '+----+---------------------+------------+------------------+\n';
+  
       Object.keys(voteCounts).forEach((menuItemIdName) => {
-        table += `| ${menuItemIdName.padEnd(21)} | ${String(voteCounts[menuItemIdName]).padEnd(10)} |\n`;
+          const [id, menuItem, category] = menuItemIdName.split(' | ');
+          const voteCount = voteCounts[menuItemIdName];
+          table += `| ${id.padEnd(2)} | ${menuItem.padEnd(19)} | ${String(voteCount).padEnd(10)} | ${category.padEnd(16)} |\n`;
       });
-      table += '+----+---------------------+------------+\n';
+  
+      table += '+----+---------------------+------------+------------------+\n';
       return table;
-    }
+  }
     
     public static formatDiscardListToTable(discardList: any[]) {
       let table = '+----+-------------+--------------------+--------+--------------+---------------+\n';

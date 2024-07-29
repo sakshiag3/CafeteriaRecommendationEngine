@@ -85,7 +85,7 @@ export class ChefController {
 
       const voteCounts = votes.reduce((acc, vote) => {
         const selectedRecommendation = vote.selectedRecommendation;
-        const menuItemIdName = `${selectedRecommendation.id} | ${selectedRecommendation.menuItem.name}`;
+        const menuItemIdName = `${selectedRecommendation.id} | ${selectedRecommendation.menuItem.name} | ${ selectedRecommendation.meal}`;
         if (!acc[menuItemIdName]) {
           acc[menuItemIdName] = 0;
         }
