@@ -3,7 +3,7 @@ import { Recommendation } from '../entity/Recommendation';
 import { SelectedRecommendation } from '../entity/SelectedRecommendation';
 import { MenuItem } from '../entity/MenuItem';
 import { FoodCategory } from '../entity/FoodCategory';
-
+import { TOP_ITEM_COUNT } from '../utils/Constants';
 export class RecommendationService {
   private recommendationRepository: RecommendationRepository;
 
@@ -25,11 +25,10 @@ export class RecommendationService {
       const dinnerItems = await this.getMenuItemsWithScores(dinnerCategory);
 
       const recommendations = [
-        ...this.getTopItems(breakfastItems, 3, 'Breakfast'),
-        ...this.getTopItems(lunchItems, 3, 'Lunch'),
-        ...this.getTopItems(dinnerItems, 3, 'Dinner')
+        ...this.getTopItems(breakfastItems, TOP_ITEM_COUNT, 'Breakfast'),
+        ...this.getTopItems(lunchItems, TOP_ITEM_COUNT, 'Lunch'),
+        ...this.getTopItems(dinnerItems, TOP_ITEM_COUNT, 'Dinner')
       ];
-
       for (const rec of recommendations) {
         const recommendation = new Recommendation();
         recommendation.menuItem = rec.menuItem;
@@ -91,13 +90,14 @@ export class RecommendationService {
       throw new Error('Error getting sentiment score');
     }
   }
-
   getTopItems(items: any[], count: number, meal: string) {
     return items
-      .sort((a, b) => b.avgRating - a.avgRating || b.sentimentScore - a.sentimentScore)
+      .sort((item1, item2) => 
+        item2.avgRating - item1.avgRating || item2.sentimentScore - item1.sentimentScore
+      )
       .slice(0, count)
       .map(item => ({ ...item, meal }));
-  }
+  }  
 
   async getRecommendationById(id: number): Promise<Recommendation | null> {
     try {

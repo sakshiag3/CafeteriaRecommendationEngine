@@ -76,7 +76,7 @@ export async function handleUserConnection(ws: WebSocket) {
     } else if (currentState.startsWith('selectRecommendations') || currentState.startsWith('selectItemToPrepare')) {
       await handleChefInputs(ws, msg, currentState, currentStateSetter, selectedIdsByMeal);
     } else if (currentState === 'changeAvailability') {
-      const [itemId, availability] = msg.split(' '); 
+      const [itemId, availability] = msg.split(','); 
       await adminController.changeAvailability(ws, parseInt(itemId), availability === 'true');
       currentStateSetter('authenticated');
     } else if (currentState.startsWith('addUser')) {

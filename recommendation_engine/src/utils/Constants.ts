@@ -5,3 +5,5 @@ export const FEEDBACK_QUESTION_1 = 'What didn’t you like about ';
 export const FEEDBACK_QUESTION_2 = 'How would you like ';
 export const FEEDBACK_QUESTION_3 = ' to taste?';
 export const FEEDBACK_QUESTION_4 = 'Share your mom’s recipe.';
+export const TOP_ITEM_COUNT = 3;
+
